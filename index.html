@@ -802,21 +802,35 @@ function subscribeInbox() {
   unsubInbox = window._onSnapshot(inboxRef, snap => {
     if (firstSnap) {
       firstSnap = false;
-      // 첫 스냅에서도 'left' 알림은 즉시 반영 (오프라인 중 받은 것 포함)
+      let changed = false;
       snap.docs.forEach(doc => {
         const d = doc.data();
-        if (d.type === 'left') markPartnerLeft(d.dmId);
+        const ts = d.ts?.toDate?.() || new Date(0);
+        if (d.type === 'left') {
+          // profileResetTime 이후 left 알림만 적용 (이전 잔류 doc 무시)
+          if (ts > profileResetTime) markPartnerLeft(d.dmId);
+        } else if (d.dmId && d.partnerNick && d.partnerNick !== profile.nickname) {
+          // 첫 스냅에서도 DM 초대 처리 (폰이 오프라인이었을 때 받은 초대 포함)
+          const existing = getDmList().find(dm => dm.id === d.dmId);
+          if (!existing) {
+            clearLeftMark(d.dmId);
+            saveDmToList({ id: d.dmId, partnerNick: d.partnerNick, partnerAvatar: d.partnerAvatar, partnerGender: d.partnerGender });
+            changed = true;
+          }
+        }
       });
+      if (changed) subscribeDmRooms();
       if (document.getElementById('dmListScreen').classList.contains('active')) showDmList();
       return;
     }
     snap.docChanges().forEach(ch => {
       if (ch.type !== 'added') return;
       const d = ch.doc.data();
+      const ts = d.ts?.toDate?.() || new Date(0);
       if (d.type === 'left') {
+        if (ts <= profileResetTime) return; // 프로필 초기화 이전 left 알림 무시
         markPartnerLeft(d.dmId);
         if (document.getElementById('dmListScreen').classList.contains('active')) showDmList();
-        // 현재 그 채팅방에 있으면 배너 즉시 표시
         if (currentRoom?.id === d.dmId) {
           const existing = document.getElementById('chatLeftBanner');
           if (!existing) {
@@ -831,7 +845,6 @@ function subscribeInbox() {
         return;
       }
       if (d.partnerNick === profile.nickname) return;
-      // 상대방이 새로 DM을 걸어오면 이전 "나갔습니다" 마커 제거
       clearLeftMark(d.dmId);
       saveDmToList({ id: d.dmId, partnerNick: d.partnerNick, partnerAvatar: d.partnerAvatar, partnerGender: d.partnerGender });
       subscribeDmRooms();
