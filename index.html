@@ -437,10 +437,9 @@ body {
           <div class="edit-avatar-preview" id="editAvatarPreview" onclick="document.getElementById('editAvatarInput').click()">
             <span id="editAvatarEmoji">📷</span>
           </div>
-          <div style="display:flex;gap:8px;margin-top:2px">
-            <span style="font-size:12px;color:var(--blue);cursor:pointer;text-decoration:underline" onclick="document.getElementById('editAvatarInput').click()">사진 선택</span>
-            <span style="font-size:12px;color:var(--c-muted)">|</span>
-            <span style="font-size:12px;color:#E24B4A;cursor:pointer;text-decoration:underline" onclick="clearEditAvatar()">사진 없음</span>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button type="button" onclick="document.getElementById('editAvatarInput').click()" style="padding:6px 12px;border:1px solid var(--blue);border-radius:6px;background:#fff;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit">📷 사진 변경</button>
+            <button type="button" onclick="clearEditAvatar()" style="padding:6px 12px;border:1px solid var(--c-border);border-radius:6px;background:var(--c-input);color:var(--c-muted);font-size:12px;cursor:pointer;font-family:inherit">👤 기본 사진</button>
           </div>
           <input type="file" id="editAvatarInput" accept="image/*">
         </div>
@@ -801,18 +800,38 @@ function subscribeInbox() {
   const inboxRef = window._collection(window._db, 'users', profile.nickname, 'inbox');
   let firstSnap = true;
   unsubInbox = window._onSnapshot(inboxRef, snap => {
-    if (firstSnap) { firstSnap = false; return; }
+    if (firstSnap) {
+      firstSnap = false;
+      // 첫 스냅에서도 'left' 알림은 즉시 반영 (오프라인 중 받은 것 포함)
+      snap.docs.forEach(doc => {
+        const d = doc.data();
+        if (d.type === 'left') markPartnerLeft(d.dmId);
+      });
+      if (document.getElementById('dmListScreen').classList.contains('active')) showDmList();
+      return;
+    }
     snap.docChanges().forEach(ch => {
       if (ch.type !== 'added') return;
       const d = ch.doc.data();
       if (d.type === 'left') {
         markPartnerLeft(d.dmId);
         if (document.getElementById('dmListScreen').classList.contains('active')) showDmList();
+        // 현재 그 채팅방에 있으면 배너 즉시 표시
+        if (currentRoom?.id === d.dmId) {
+          const existing = document.getElementById('chatLeftBanner');
+          if (!existing) {
+            const banner = document.createElement('div');
+            banner.id = 'chatLeftBanner';
+            banner.className = 'chat-left-banner';
+            banner.textContent = '상대방이 채팅방을 나갔습니다';
+            const msgs = document.getElementById('messages');
+            msgs.parentNode.insertBefore(banner, msgs);
+          }
+        }
         return;
       }
       if (d.partnerNick === profile.nickname) return;
       saveDmToList({ id: d.dmId, partnerNick: d.partnerNick, partnerAvatar: d.partnerAvatar, partnerGender: d.partnerGender });
-      // 새 상대 추가됐으면 해당 방도 구독
       subscribeDmRooms();
     });
   });
@@ -826,6 +845,15 @@ function saveDmLastMsg(dmId, text, sender) {
 }
 function getDmLastMsg(dmId) {
   return (JSON.parse(localStorage.getItem('dnTalk_lastMsgs') || '{}'))[dmId] || null;
+}
+function getDmUnread() { return JSON.parse(localStorage.getItem('dnTalk_unread') || '{}'); }
+function addDmUnread(dmId) {
+  const u = getDmUnread(); u[dmId] = (u[dmId] || 0) + 1;
+  localStorage.setItem('dnTalk_unread', JSON.stringify(u));
+}
+function clearDmUnread(dmId) {
+  const u = getDmUnread(); delete u[dmId];
+  localStorage.setItem('dnTalk_unread', JSON.stringify(u));
 }
 
 function subscribeDmRooms() {
@@ -865,6 +893,8 @@ function subscribeDmRooms() {
         // 내가 보낸 메시지이거나, 현재 그 방에 있으면 알림 생략
         if (d.sender === profile.nickname) return;
         if (currentRoom?.id === dm.id) return;
+        addDmUnread(dm.id);
+        if (document.getElementById('dmListScreen').classList.contains('active')) showDmList();
         if (isMuted(dm.id)) return;
         dmBadgeCount++;
         updateDmBadge();
@@ -944,6 +974,7 @@ function enterChat(roomId, title, sub, badge, backTarget, isDM = false) {
   document.getElementById('roomSub').textContent = sub;
   document.getElementById('roomBadge').textContent = badge;
   document.getElementById('onlineCount').textContent = '';
+  if (isDM) { clearDmUnread(roomId); updateDmBadge(); }
   document.getElementById('messages').innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
   // 상대방 나감 배너
   const existingBanner = document.getElementById('chatLeftBanner');
@@ -1038,7 +1069,10 @@ function leaveDm(dmId, partnerNick, e) {
 }
 
 function showDmList() {
-  dmBadgeCount = 0; updateDmBadge();
+  // 전체 뱃지는 안읽은 방 수 기준으로 재계산
+  const unreadMap = getDmUnread();
+  dmBadgeCount = Object.keys(unreadMap).filter(id => getDmList().find(d => d.id === id)).length;
+  updateDmBadge();
   const list = getDmList();
   const leftDms = getLeftDms();
   const el = document.getElementById('dmList');
@@ -1066,10 +1100,14 @@ function showDmList() {
         subText = `<div class="dm-item-left">${isMine ? '나: ' : ''}${esc(preview)}</div>`;
       }
       const muteIcon = muted ? '🔕' : '🔔';
+      const unread = (getDmUnread()[dm.id] || 0);
+      const unreadBadge = unread > 0
+        ? `<span style="min-width:18px;height:18px;background:#E24B4A;color:#fff;border-radius:20px;font-size:11px;font-weight:700;padding:0 5px;display:inline-flex;align-items:center;justify-content:center;margin-left:4px">${unread}</span>`
+        : '';
       item.innerHTML = `
         <div class="dm-item-avatar">${avatarHtml}</div>
         <div class="dm-item-info">
-          <div class="dm-item-name">${esc(dm.partnerNick)} ${genderIcon}</div>
+          <div class="dm-item-name">${esc(dm.partnerNick)} ${genderIcon}${unreadBadge}</div>
           ${subText}
         </div>
         <div class="dm-item-actions">
