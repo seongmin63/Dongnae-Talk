@@ -594,7 +594,7 @@ function goLocation() {
   const resetTime = Date.now();
   localStorage.setItem('dnTalk_resetTime', resetTime.toString());
   profileResetTime = new Date(resetTime);
-  localStorage.removeItem('dnTalk_dms');
+  ['dnTalk_dms','dnTalk_left','dnTalk_unread','dnTalk_lastMsgs','dnTalk_mute'].forEach(k => localStorage.removeItem(k));
   Object.values(dmRoomSubs).forEach(u => u());
   dmRoomSubs = {};
   showScreen('locationScreen');
@@ -755,8 +755,7 @@ function saveProfile() {
   const resetTime = Date.now();
   localStorage.setItem('dnTalk_resetTime', resetTime.toString());
   profileResetTime = new Date(resetTime);
-  localStorage.removeItem('dnTalk_dms');
-  // DM 방 구독 전부 해제
+  ['dnTalk_dms','dnTalk_left','dnTalk_unread','dnTalk_lastMsgs','dnTalk_mute'].forEach(k => localStorage.removeItem(k));
   Object.values(dmRoomSubs).forEach(u => u());
   dmRoomSubs = {};
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
@@ -1017,7 +1016,7 @@ function enterChat(roomId, title, sub, badge, backTarget, isDM = false) {
       });
     });
 
-    joinPresence(roomId);
+    if (!isDM) joinPresence(roomId);
   };
 
   if (window._firebaseReady) connect();
