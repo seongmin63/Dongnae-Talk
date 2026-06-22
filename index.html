@@ -7,7 +7,7 @@
 <title>서울챗</title>
 
 <script type="module">
-  import { initializeFirestore, collection, addDoc, setDoc, deleteDoc, getDocs, doc, query, orderBy, onSnapshot, limit, where, enableNetwork, disableNetwork }
+  import { initializeFirestore, collection, addDoc, setDoc, deleteDoc, getDocs, getDoc, doc, query, orderBy, onSnapshot, limit, where, enableNetwork, disableNetwork }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
@@ -28,6 +28,7 @@
   window._setDoc = setDoc;
   window._deleteDoc = deleteDoc;
   window._getDocs = getDocs;
+  window._getDoc = getDoc;
   window._doc = doc;
   window._query = query;
   window._orderBy = orderBy;
@@ -482,6 +483,14 @@ body {
 // ── 상태 ────────────────────────────────────────────────
 let profile = JSON.parse(localStorage.getItem('dnTalk_profile') || 'null');
 let profileResetTime = new Date(parseInt(localStorage.getItem('dnTalk_resetTime') || '0'));
+// 구 버전 프로필에 profileId 없으면 즉시 생성 (업데이트 마이그레이션)
+if (profile && !profile.profileId) {
+  profile.profileId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  localStorage.setItem('dnTalk_profile', JSON.stringify(profile));
+  document.addEventListener('firebaseReady', () => {
+    window._setDoc(window._doc(window._db, 'users', profile.nickname, 'meta'), { profileId: profile.profileId }).catch(() => {});
+  }, { once: true });
+}
 let currentLocation = { gu: '', dong: '' };
 let currentRoom = null;
 let chatBackTarget = 'menuScreen';
@@ -584,13 +593,17 @@ function showScreen(id) {
 }
 
 // ── 위치 화면으로 ────────────────────────────────────────
+function generateProfileId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
 function goLocation() {
   const nick = document.getElementById('nicknameInput').value.trim();
   const gender = selectedGender;
   const avatar = localStorage.getItem('dnTalk_avatar') || '';
-  // 기존 DM 파트너들에게 나갔음 알림
   notifyDmPartnersLeft();
-  profile = { nickname: nick, gender, avatar };
+  const profileId = generateProfileId();
+  profile = { nickname: nick, gender, avatar, profileId };
   localStorage.setItem('dnTalk_profile', JSON.stringify(profile));
   const resetTime = Date.now();
   localStorage.setItem('dnTalk_resetTime', resetTime.toString());
@@ -598,6 +611,14 @@ function goLocation() {
   ['dnTalk_dms','dnTalk_left','dnTalk_unread','dnTalk_lastMsgs','dnTalk_mute'].forEach(k => localStorage.removeItem(k));
   Object.values(dmRoomSubs).forEach(u => u());
   dmRoomSubs = {};
+  // Firestore에 내 profileId 공개 (상대방이 DM 방 ID 계산할 때 사용)
+  if (window._firebaseReady) {
+    window._setDoc(window._doc(window._db, 'users', nick, 'meta'), { profileId }).catch(() => {});
+  } else {
+    document.addEventListener('firebaseReady', () => {
+      window._setDoc(window._doc(window._db, 'users', nick, 'meta'), { profileId }).catch(() => {});
+    }, { once: true });
+  }
   showScreen('locationScreen');
   resetLocUI();
   requestLocation();
@@ -764,9 +785,9 @@ function saveProfile() {
   const nick = document.getElementById('editNicknameInput').value.trim();
   if (!nick || !editSelectedGender) return;
   const avatar = editAvatarData || '';
-  // 프로필 바꾸기 전에 기존 DM 파트너들에게 나갔음 알림
   notifyDmPartnersLeft();
-  profile = { nickname: nick, gender: editSelectedGender, avatar };
+  const profileId = generateProfileId();
+  profile = { nickname: nick, gender: editSelectedGender, avatar, profileId };
   localStorage.setItem('dnTalk_profile', JSON.stringify(profile));
   const resetTime = Date.now();
   localStorage.setItem('dnTalk_resetTime', resetTime.toString());
@@ -775,6 +796,8 @@ function saveProfile() {
   Object.values(dmRoomSubs).forEach(u => u());
   dmRoomSubs = {};
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  // Firestore에 새 profileId 공개
+  window._setDoc(window._doc(window._db, 'users', nick, 'meta'), { profileId }).catch(() => {});
   document.getElementById('myProfileModal').classList.remove('open');
   renderMyAvatarBtn();
   showMenu();
@@ -788,21 +811,27 @@ function enterGroupChat(type) {
 }
 
 // ── 1:1 채팅 입장 ────────────────────────────────────────
-function enterDM(partnerNick, partnerAvatarData, partnerGender) {
+async function enterDM(partnerNick, partnerAvatarData, partnerGender) {
   closePartnerModal();
-  const dmId = 'dm_' + [profile.nickname, partnerNick].sort().join('__');
-  // 새로 시작하는 DM이므로 이전 "나갔습니다" 마커 제거
+  // 상대방의 현재 profileId를 Firestore에서 가져와 방 ID 계산
+  // (닉네임이 같아도 프로필 변경 시마다 새 방 생성)
+  let partnerProfileId = null;
+  try {
+    const metaSnap = await window._getDoc(window._doc(window._db, 'users', partnerNick, 'meta'));
+    if (metaSnap.exists()) partnerProfileId = metaSnap.data().profileId;
+  } catch (e) {}
+  const myId = profile.profileId || profile.nickname;
+  const theirId = partnerProfileId || partnerNick;
+  const dmId = 'dm_' + [myId, theirId].sort().join('__');
   clearLeftMark(dmId);
-  // startFrom = 내 profileResetTime (상대방이 이 시점 이전 메시지를 필터링하는 기준)
-  saveDmToList({ id: dmId, partnerNick, partnerAvatar: partnerAvatarData, partnerGender, startFrom: profileResetTime.getTime() });
-  subscribeDmRooms(); // 즉시 구독 등록 (이후 상대 메시지 수신 대비)
+  saveDmToList({ id: dmId, partnerNick, partnerAvatar: partnerAvatarData, partnerGender });
+  subscribeDmRooms();
   if (window._firebaseReady) {
     const inboxRef = window._doc(window._db, 'users', partnerNick, 'inbox', dmId);
     window._setDoc(inboxRef, {
       dmId, partnerNick: profile.nickname,
       partnerAvatar: profile.avatar || '',
       partnerGender: profile.gender,
-      senderResetTime: profileResetTime.getTime(), // 상대방 메시지 필터 기준
       ts: new Date()
     }).catch(() => {});
   }
@@ -825,17 +854,13 @@ function subscribeInbox() {
       snap.docs.forEach(docSnap => {
         const d = docSnap.data();
         if (d.type === 'left') {
-          // 처리 후 Firestore에서 삭제 (재처리 방지)
           markPartnerLeft(d.dmId);
           window._deleteDoc(docSnap.ref).catch(() => {});
         } else if (d.dmId && d.partnerNick && d.partnerNick !== profile.nickname) {
           const existing = getDmList().find(dm => dm.id === d.dmId);
           if (!existing) {
             clearLeftMark(d.dmId);
-            const partnerReset = d.senderResetTime ? Number(d.senderResetTime) : 0;
-            // startFrom은 내 리셋 시점과 상대방 리셋 시점 중 더 늦은 시점으로
-            const startFrom = Math.max(profileResetTime.getTime(), partnerReset);
-            saveDmToList({ id: d.dmId, partnerNick: d.partnerNick, partnerAvatar: d.partnerAvatar, partnerGender: d.partnerGender, startFrom });
+            saveDmToList({ id: d.dmId, partnerNick: d.partnerNick, partnerAvatar: d.partnerAvatar, partnerGender: d.partnerGender });
             changed = true;
           }
         }
@@ -849,7 +874,6 @@ function subscribeInbox() {
       const d = ch.doc.data();
       if (d.type === 'left') {
         markPartnerLeft(d.dmId);
-        // 처리 후 Firestore에서 삭제 (재처리 방지)
         window._deleteDoc(ch.doc.ref).catch(() => {});
         if (document.getElementById('dmListScreen').classList.contains('active')) showDmList();
         if (currentRoom?.id === d.dmId) {
@@ -867,9 +891,7 @@ function subscribeInbox() {
       }
       if (d.partnerNick === profile.nickname) return;
       clearLeftMark(d.dmId);
-      const partnerReset = d.senderResetTime ? Number(d.senderResetTime) : 0;
-      const startFrom = Math.max(profileResetTime.getTime(), partnerReset);
-      saveDmToList({ id: d.dmId, partnerNick: d.partnerNick, partnerAvatar: d.partnerAvatar, partnerGender: d.partnerGender, startFrom });
+      saveDmToList({ id: d.dmId, partnerNick: d.partnerNick, partnerAvatar: d.partnerAvatar, partnerGender: d.partnerGender });
       subscribeDmRooms();
     });
   });
@@ -907,9 +929,7 @@ function subscribeDmRooms() {
   list.forEach(dm => {
     if (dmRoomSubs[dm.id]) return; // 이미 구독 중
     const colRef = window._collection(window._db, 'rooms', dm.id, 'messages');
-    // 내 리셋 시점과 상대 리셋 시점 중 더 늦은 것을 cutoff로 사용
-    const dmCutoff = new Date(Math.max(profileResetTime.getTime(), dm.startFrom || 0));
-    const q = window._query(colRef, window._where('ts', '>=', dmCutoff), window._orderBy('ts'), window._limit(50));
+    const q = window._query(colRef, window._orderBy('ts'), window._limit(50));
     let initialized = false;
     dmRoomSubs[dm.id] = window._onSnapshot(q, snap => {
       if (!initialized) {
@@ -1030,14 +1050,7 @@ function enterChat(roomId, title, sub, badge, backTarget, isDM = false) {
 
   const connect = () => {
     const colRef = window._collection(window._db, 'rooms', roomId, 'messages');
-    // DM은 프로필 리셋 시점 이후 메시지만 Firestore 쿼리 레벨에서 필터링
-    const dmInfo = isDM ? getDmList().find(d => d.id === roomId) : null;
-    const cutoff = isDM
-      ? new Date(Math.max(profileResetTime.getTime(), dmInfo?.startFrom || 0))
-      : new Date(profileResetTime.getTime());
-    const q = isDM
-      ? window._query(colRef, window._where('ts', '>=', cutoff), window._orderBy('ts'), window._limit(100))
-      : window._query(colRef, window._orderBy('ts'), window._limit(100));
+    const q = window._query(colRef, window._orderBy('ts'), window._limit(100));
 
     const renderedIds = new Set();
     let initialSnapDone = false;
@@ -1046,21 +1059,14 @@ function enterChat(roomId, title, sub, badge, backTarget, isDM = false) {
       if (!initialSnapDone) {
         initialSnapDone = true;
         el.innerHTML = ''; lastDate = '';
-        // DM만 입장 메시지 표시
         if (isDM) {
           window._addDoc(colRef, { type:'system', text: profile.nickname + '님이 입장했습니다', ts: new Date() });
         }
       }
       snap.docChanges().forEach(ch => {
         if (ch.type === 'added' && !renderedIds.has(ch.doc.id)) {
-          const msgData = ch.doc.data();
-          // 클라이언트 사이드 이중 필터 (Firestore where 절 보완)
-          if (isDM) {
-            const msgTs = msgData.ts?.toDate?.() || new Date(0);
-            if (msgTs < cutoff) { renderedIds.add(ch.doc.id); return; }
-          }
           renderedIds.add(ch.doc.id);
-          appendMsg(msgData);
+          appendMsg(ch.doc.data());
           el.scrollTop = el.scrollHeight;
         }
       });
