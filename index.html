@@ -202,10 +202,10 @@ body {
 }
 
 /* ── 광고 배너 ── */
-#adBanner { flex-shrink: 0; height: 110px; overflow: hidden; background: #fff0f3; }
-#adBanner a { display: block; height: 110px; }
-#adTrack { display: flex; height: 110px; transition: transform .6s ease; }
-#adTrack img { flex: 0 0 auto; height: 110px; object-fit: cover; object-position: center; }
+#adBanner { flex-shrink: 0; height: 80px; overflow: hidden; background: #fff0f3; }
+#adBanner a { display: block; height: 80px; }
+#adTrack { display: flex; height: 80px; transition: transform .6s ease; }
+#adTrack img { flex: 0 0 auto; height: 80px; object-fit: cover; object-position: center; }
 
 /* ── 채팅 화면 ── */
 #chatScreen { flex: 1; overflow: hidden; }
@@ -422,10 +422,8 @@ body {
   <div id="adBanner" style="display:none">
     <a href="https://oeeo.store/" target="_blank" rel="noopener" id="adLink">
       <div id="adTrack">
-        <img src="oeeo_1.png" alt="oeeo strawberry">
-        <img src="oeeo_2.png" alt="oeeo strawberry">
-        <img src="oeeo_3.png" alt="oeeo strawberry">
-        <img src="oeeo_4.png" alt="oeeo strawberry">
+        <img src="ad_oeeo.png" alt="oeeo strawberry">
+        <img src="ad_contact.png" alt="광고 문의">
       </div>
     </a>
   </div>
@@ -1261,7 +1259,7 @@ function esc(s) {
 // ── 광고 배너 캐러셀 ─────────────────────────────────────
 let adTimer = null;
 let adIndex = 0;
-const AD_COUNT = 4;
+const AD_COUNT = 2;
 
 function startAdBanner() {
   const banner = document.getElementById('adBanner');
@@ -1275,7 +1273,7 @@ function startAdBanner() {
   adTimer = setInterval(() => {
     adIndex = (adIndex + 1) % AD_COUNT;
     track.style.transform = `translateX(-${adIndex * w}px)`;
-  }, 3000);
+  }, 6000);
 }
 
 function stopAdBanner() {
