@@ -611,11 +611,19 @@ async function onLocSuccess(pos) {
   const { latitude: lat, longitude: lng } = pos.coords;
   document.getElementById('locTitle').textContent = '동네를 찾는 중...';
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, { headers: { 'Accept-Language': 'ko' } });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko&zoom=16`,
+      { headers: { 'User-Agent': 'SeoulChat/1.0', 'Accept-Language': 'ko' }, signal: controller.signal }
+    );
+    clearTimeout(timer);
     const data = await res.json();
     const addr = data.address || {};
-    const gu   = addr.city_district || addr.borough || addr.county || '알 수 없는 구';
-    const dong = addr.neighbourhood || addr.quarter || addr.suburb || addr.village || '알 수 없는 동';
+    // 시/군/구: city_district(구) > county(군/시) > city > town
+    const gu = addr.city_district || addr.borough || addr.county || addr.city || addr.town || '알 수 없는 구';
+    // 읍/면/동: neighbourhood > quarter > suburb > village > town
+    const dong = addr.neighbourhood || addr.quarter || addr.suburb || addr.village || addr.town || '알 수 없는 동';
     currentLocation = { gu, dong };
     showMenu();
   } catch(e) {
