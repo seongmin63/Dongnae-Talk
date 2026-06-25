@@ -202,10 +202,10 @@ body {
 }
 
 /* ── 광고 배너 ── */
-#adBanner { flex-shrink: 0; height: 110px; overflow: hidden; position: relative; background: #fff0f3; }
-#adBanner a { display: block; height: 100%; }
-#adTrack { display: flex; height: 100%; transition: transform .6s ease; }
-#adTrack img { flex-shrink: 0; width: 100%; height: 110px; object-fit: cover; object-position: center; }
+#adBanner { flex-shrink: 0; height: 110px; overflow: hidden; background: #fff0f3; }
+#adBanner a { display: block; height: 110px; }
+#adTrack { display: flex; height: 110px; transition: transform .6s ease; }
+#adTrack img { flex: 0 0 auto; height: 110px; object-fit: cover; object-position: center; }
 
 /* ── 채팅 화면 ── */
 #chatScreen { flex: 1; overflow: hidden; }
@@ -1267,11 +1267,14 @@ function startAdBanner() {
   const banner = document.getElementById('adBanner');
   banner.style.display = '';
   adIndex = 0;
-  document.getElementById('adTrack').style.transform = 'translateX(0)';
+  const w = banner.offsetWidth;
+  const track = document.getElementById('adTrack');
+  track.querySelectorAll('img').forEach(img => { img.style.width = w + 'px'; });
+  track.style.transform = 'translateX(0)';
   clearInterval(adTimer);
   adTimer = setInterval(() => {
     adIndex = (adIndex + 1) % AD_COUNT;
-    document.getElementById('adTrack').style.transform = `translateX(-${adIndex * 100}%)`;
+    track.style.transform = `translateX(-${adIndex * w}px)`;
   }, 3000);
 }
 
