@@ -457,7 +457,7 @@ if (profile && !profile.profileId) {
   profile.profileId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   localStorage.setItem('dnTalk_profile', JSON.stringify(profile));
   document.addEventListener('firebaseReady', () => {
-    window._setDoc(window._doc(window._db, 'users', profile.nickname, 'meta'), { profileId: profile.profileId }).catch(() => {});
+    window._setDoc(window._doc(window._db, 'users', profile.nickname), { profileId: profile.profileId }).catch(() => {});
   }, { once: true });
 }
 let currentLocation = { gu: '', dong: '' };
@@ -567,11 +567,11 @@ function goLocation() {
     resetLocUI();
     // Firestore: profileId 공개 + 이전 inbox 정리
     if (window._firebaseReady) {
-      window._setDoc(window._doc(window._db, 'users', nick, 'meta'), { profileId }).catch(() => {});
+      window._setDoc(window._doc(window._db, 'users', nick), { profileId }).catch(() => {});
       deleteMyInbox(nick);
     } else {
       document.addEventListener('firebaseReady', () => {
-        window._setDoc(window._doc(window._db, 'users', nick, 'meta'), { profileId }).catch(() => {});
+        window._setDoc(window._doc(window._db, 'users', nick), { profileId }).catch(() => {});
         deleteMyInbox(nick);
       }, { once: true });
     }
@@ -789,7 +789,7 @@ function saveProfile() {
   dmRoomSubs = {};
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   // Firestore에 새 profileId 공개
-  window._setDoc(window._doc(window._db, 'users', nick, 'meta'), { profileId }).catch(() => {});
+  window._setDoc(window._doc(window._db, 'users', nick), { profileId }).catch(() => {});
   document.getElementById('myProfileModal').classList.remove('open');
   renderMyAvatarBtn();
   showMenu();
@@ -809,7 +809,7 @@ async function enterDM(partnerNick, partnerAvatarData, partnerGender) {
   // (닉네임이 같아도 프로필 변경 시마다 새 방 생성)
   let partnerProfileId = null;
   try {
-    const metaSnap = await window._getDoc(window._doc(window._db, 'users', partnerNick, 'meta'));
+    const metaSnap = await window._getDoc(window._doc(window._db, 'users', partnerNick));
     if (metaSnap.exists()) partnerProfileId = metaSnap.data().profileId;
   } catch (e) {}
   const myId = profile.profileId || profile.nickname;
