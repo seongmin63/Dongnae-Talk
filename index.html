@@ -160,14 +160,15 @@ body {
 .my-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
 .menu-list { padding: 1rem; display: flex; flex-direction: column; gap: 10px; }
 .menu-item {
-  background: var(--c-panel); border: 1px solid var(--c-border);
+  background: #f0faf4; border: 1px solid #b8ddc8;
   border-radius: var(--radius-md); padding: 1rem 1.2rem;
   display: flex; align-items: center; gap: 14px;
   cursor: pointer; text-align: left; width: 100%; font-family: inherit;
-  transition: border-color .15s, box-shadow .15s;
+  transition: border-color .15s, box-shadow .15s, background .15s;
 }
-.menu-item:hover { border-color: var(--blue); box-shadow: 0 4px 12px rgba(0,80,56,.15); }
-.menu-icon { font-size: 28px; flex-shrink: 0; }
+.menu-item:hover { background: #e2f5ea; border-color: var(--blue); box-shadow: 0 4px 12px rgba(0,80,56,.15); }
+.menu-icon { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; }
+.menu-icon { font-size: 28px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 14px; }
 .menu-item-body { flex: 1; }
 .menu-item-title { font-size: 15px; font-weight: 700; color: var(--c-text); }
 .menu-item-sub { font-size: 12px; color: var(--c-muted); margin-top: 2px; }
@@ -394,8 +395,8 @@ body {
       <circle cx="62" cy="79" r="4" fill="white"/>
     </svg>
     <h1 class="intro-title" data-i18n="intro_title">Village Talk</h1>
-    <p class="intro-desc" data-i18n="intro_desc">Chat with neighbors in real time.<br>Meet people nearby based on your location<br>and connect with your community.</p>
-    <button class="intro-btn" data-i18n="intro_btn" onclick="startIntro()">Get Started →</button>
+    <p class="intro-desc" data-i18n="intro_desc">우리 동네 이웃들과 실시간으로 대화해요.<br>위치 기반으로 가까운 사람들을 만나고<br>함께 소통하는 공간이에요.</p>
+    <button class="intro-btn" data-i18n="intro_btn" onclick="startIntro()">시작하기 →</button>
   </div>
 </div>
 
@@ -403,26 +404,26 @@ body {
 <div id="profileScreen" class="screen">
   <div class="profile-card">
     <div>
-      <h2 data-i18n="profile_title">Get Started</h2>
-      <p class="desc" style="margin-top:4px" data-i18n="profile_desc">Chat freely with your local neighbors.<br>Your location places you in the right room automatically.</p>
+      <h2 data-i18n="profile_title">Village Talk 시작하기</h2>
+      <p class="desc" style="margin-top:4px" data-i18n="profile_desc">내 동네 이웃들과 자유롭게 대화해요.<br>프로필을 설정하면 위치 기반으로 자동 입장돼요.</p>
     </div>
     <div class="avatar-section">
       <div class="avatar-preview" id="avatarPreview" onclick="document.getElementById('avatarInput').click()" title="사진 선택">
         <span id="avatarEmoji">📷</span>
       </div>
-      <span class="avatar-hint" data-i18n="profile_avatar_hint">Tap to upload a photo (optional)</span>
+      <span class="avatar-hint" data-i18n="profile_avatar_hint">탭해서 사진 업로드 (선택)</span>
       <input type="file" id="avatarInput" accept="image/*">
     </div>
     <div class="field">
-      <label data-i18n="profile_nickname_label">Nickname <span style="color:#E24B4A">*</span></label>
-      <input type="text" id="nicknameInput" data-i18n-ph="profile_nickname_ph" placeholder="e.g. Friendly Neighbor" maxlength="16" oninput="checkReady()">
+      <label data-i18n="profile_nickname_label">닉네임 *</label>
+      <input type="text" id="nicknameInput" data-i18n-ph="profile_nickname_ph" placeholder="예: 마포 이웃" maxlength="16" oninput="checkReady()">
     </div>
     <div class="field">
-      <label data-i18n="profile_gender_label">Gender <span style="color:#E24B4A">*</span></label>
+      <label data-i18n="profile_gender_label">성별 *</label>
       <div class="gender-group">
-        <button class="gender-btn" data-g="남" onclick="selectGender(this)" style="--g-color:#4A90D9;--g-bg:#EAF4FF" data-i18n="gender_m">🙋‍♂️ Male</button>
-        <button class="gender-btn" data-g="여" onclick="selectGender(this)" style="--g-color:#D94A7A;--g-bg:#FFE8F2" data-i18n="gender_f">🙋‍♀️ Female</button>
-        <button class="gender-btn" data-g="🦄" onclick="selectGender(this)" style="--g-color:#9B59B6;--g-bg:#F3E8FF" data-i18n="gender_u">🦄 Other</button>
+        <button class="gender-btn" data-g="남" onclick="selectGender(this)" style="--g-color:#2563EB;--g-bg:#EFF6FF"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="9.5" cy="14" r="5.5"/><line x1="13.5" y1="9.5" x2="19.5" y2="3.5"/><polyline points="15.5 3.5 19.5 3.5 19.5 7.5"/></svg> <span data-i18n="gender_m">남</span></button>
+        <button class="gender-btn" data-g="여" onclick="selectGender(this)" style="--g-color:#DB2777;--g-bg:#FDF2F8"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="9" r="5.5"/><line x1="12" y1="14.5" x2="12" y2="21"/><line x1="9" y1="18" x2="15" y2="18"/></svg> <span data-i18n="gender_f">여</span></button>
+        <button class="gender-btn" data-g="🦄" onclick="selectGender(this)" style="--g-color:#7C3AED;--g-bg:#F5F3FF"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2 5.5 5.5 2-5.5 2L12 17l-2-5.5L4.5 9.5l5.5-2z"/><line x1="5" y1="19" x2="6.5" y2="22"/><line x1="12" y1="17" x2="12" y2="20"/><line x1="19" y1="19" x2="17.5" y2="22"/></svg> <span data-i18n="gender_u">기타</span></button>
       </div>
     </div>
     <div class="field">
@@ -432,7 +433,7 @@ body {
         <select id="nationalityInput" class="nationality-select" onchange="updateNationalityFlag();checkReady()" style="flex:1"></select>
       </div>
     </div>
-    <button class="btn-primary" id="startBtn" data-i18n="profile_btn" onclick="goLocation()" disabled>Find My Neighborhood →</button>
+    <button class="btn-primary" id="startBtn" data-i18n="profile_btn" onclick="goLocation()" disabled>내 위치로 동네 찾기 →</button>
     <p style="font-size:11px;color:var(--c-muted);text-align:center;margin-top:-4px;line-height:1.5" data-i18n="data_note"></p>
   </div>
 </div>
@@ -467,7 +468,15 @@ body {
   </div>
   <div class="menu-list">
     <button class="menu-item" onclick="enterGroupChat('gu')">
-      <span class="menu-icon">🏙️</span>
+      <span class="menu-icon" style="background:#dcf3e8">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00704A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="7" height="14" rx="1.2"/><rect x="9" y="3" width="9" height="18" rx="1.2"/>
+          <line x1="12" y1="7" x2="12" y2="7.1"/><line x1="15" y1="7" x2="15" y2="7.1"/>
+          <line x1="12" y1="11" x2="12" y2="11.1"/><line x1="15" y1="11" x2="15" y2="11.1"/>
+          <line x1="12" y1="15" x2="12" y2="15.1"/><line x1="15" y1="15" x2="15" y2="15.1"/>
+          <line x1="2" y1="21" x2="22" y2="21"/>
+        </svg>
+      </span>
       <div class="menu-item-body">
         <div class="menu-item-title" id="guMenuTitle">우리 구 톡방</div>
         <div class="menu-item-sub" id="guMenuSub" data-i18n="menu_gu_sub">구 전체 이웃과 대화해요</div>
@@ -475,7 +484,12 @@ body {
       <span class="menu-arrow">›</span>
     </button>
     <button class="menu-item" onclick="enterGroupChat('dong')">
-      <span class="menu-icon">🏘️</span>
+      <span class="menu-icon" style="background:#dcf3e8">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00704A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 11.5L12 4l9 7.5V21a1 1 0 01-1 1H4a1 1 0 01-1-1z"/>
+          <rect x="9" y="13" width="6" height="9" rx="1"/>
+        </svg>
+      </span>
       <div class="menu-item-body">
         <div class="menu-item-title" id="dongMenuTitle">우리 동 톡방</div>
         <div class="menu-item-sub" id="dongMenuSub" data-i18n="menu_dong_sub">동네 이웃과 대화해요</div>
@@ -483,7 +497,12 @@ body {
       <span class="menu-arrow">›</span>
     </button>
     <button class="menu-item" onclick="showDmList()">
-      <span class="menu-icon">💬</span>
+      <span class="menu-icon" style="background:#dcf3e8">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00704A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          <line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/>
+        </svg>
+      </span>
       <div class="menu-item-body">
         <div class="menu-item-title" data-i18n="menu_dm">1:1 채팅 목록</div>
         <div class="menu-item-sub" data-i18n="menu_dm_sub">개인 메시지</div>
@@ -749,7 +768,7 @@ const STRINGS = {
     intro_title:'Village Talk', intro_desc:'Chat with neighbors in real time.<br>Meet people nearby based on your location<br>and connect with your community.', intro_btn:'Get Started →',
     profile_title:'Get Started', profile_desc:'Chat freely with your local neighbors.<br>Your location places you in the right room automatically.',
     profile_avatar_hint:'Tap to upload a photo (optional)', profile_nickname_label:'Nickname *', profile_nickname_ph:'e.g. Friendly Neighbor',
-    profile_gender_label:'Gender *', gender_m:'🙋‍♂️ Male', gender_f:'🙋‍♀️ Female', gender_u:'🦄 Other',
+    profile_gender_label:'Gender *', gender_m:'Male', gender_f:'Female', gender_u:'Other',
     profile_nationality_label:'Nationality *', profile_btn:'Find My Neighborhood →',
     loc_title:'Finding your neighborhood...', loc_desc:'Please allow location access in your browser.<br>You\'ll be placed in the local chat room automatically.',
     msg_placeholder:'Type a message...', menu_dm:'1:1 Chats', menu_dm_sub:'Personal messages',
@@ -767,7 +786,7 @@ const STRINGS = {
     intro_title:'Village Talk', intro_desc:'우리 동네 이웃들과 실시간으로 대화해요.<br>위치 기반으로 가까운 사람들을 만나고<br>함께 소통하는 공간이에요.', intro_btn:'시작하기 →',
     profile_title:'Village Talk 시작하기', profile_desc:'내 동네 이웃들과 자유롭게 대화해요.<br>프로필을 설정하면 위치 기반으로 자동 입장돼요.',
     profile_avatar_hint:'탭해서 사진 업로드 (선택)', profile_nickname_label:'닉네임 *', profile_nickname_ph:'예: 마포 이웃',
-    profile_gender_label:'성별 *', gender_m:'🙋‍♂️ 남', gender_f:'🙋‍♀️ 여', gender_u:'🦄 유니콘',
+    profile_gender_label:'성별 *', gender_m:'남', gender_f:'여', gender_u:'기타',
     profile_nationality_label:'국적 *', profile_btn:'내 위치로 동네 찾기 →',
     loc_title:'동네를 찾는 중...', loc_desc:'브라우저에서 위치 권한을 허용해 주세요.<br>동네 채팅방에 자동으로 입장돼요.',
     msg_placeholder:'메시지를 입력하세요...', menu_dm:'1:1 채팅 목록', menu_dm_sub:'개인 메시지',
@@ -785,7 +804,7 @@ const STRINGS = {
     intro_title:'Village Talk', intro_desc:'与附近邻居实时聊天。<br>基于位置认识身边的人，<br>一起交流互动。', intro_btn:'开始 →',
     profile_title:'开始使用', profile_desc:'与本地邻居自由交流。<br>设置完成后将根据位置自动进入聊天室。',
     profile_avatar_hint:'点击上传头像（可选）', profile_nickname_label:'昵称 *', profile_nickname_ph:'例：友好邻居',
-    profile_gender_label:'性别 *', gender_m:'🙋‍♂️ 男', gender_f:'🙋‍♀️ 女', gender_u:'🦄 其他',
+    profile_gender_label:'性别 *', gender_m:'男', gender_f:'女', gender_u:'其他',
     profile_nationality_label:'国籍 *', profile_btn:'查找我的社区 →',
     loc_title:'正在查找您的社区...', loc_desc:'请在浏览器中允许位置权限。<br>将自动进入本地聊天室。',
     msg_placeholder:'输入消息...', menu_dm:'私聊列表', menu_dm_sub:'私人消息',
@@ -803,7 +822,7 @@ const STRINGS = {
     intro_title:'Village Talk', intro_desc:'近所の人とリアルタイムでチャット。<br>位置情報で近くの人と出会い、<br>コミュニティでつながろう。', intro_btn:'はじめる →',
     profile_title:'はじめましょう', profile_desc:'地元のご近所さんと自由に話しましょう。<br>位置情報で自動的に部屋に入室されます。',
     profile_avatar_hint:'タップして写真をアップロード（任意）', profile_nickname_label:'ニックネーム *', profile_nickname_ph:'例：近所の友人',
-    profile_gender_label:'性別 *', gender_m:'🙋‍♂️ 男性', gender_f:'🙋‍♀️ 女性', gender_u:'🦄 その他',
+    profile_gender_label:'性別 *', gender_m:'男性', gender_f:'女性', gender_u:'その他',
     profile_nationality_label:'国籍 *', profile_btn:'近所を探す →',
     loc_title:'近所を探しています...', loc_desc:'ブラウザで位置情報を許可してください。<br>自動的にローカルチャットに入室します。',
     msg_placeholder:'メッセージを入力...', menu_dm:'1:1チャット一覧', menu_dm_sub:'個人メッセージ',
@@ -821,7 +840,7 @@ const STRINGS = {
     intro_title:'Village Talk', intro_desc:'Chatea con vecinos en tiempo real.<br>Conoce personas cercanas según tu ubicación<br>y conéctate con tu comunidad.', intro_btn:'Empezar →',
     profile_title:'Comenzar', profile_desc:'Chatea libremente con tus vecinos.<br>Tu ubicación te coloca en la sala correcta automáticamente.',
     profile_avatar_hint:'Toca para subir una foto (opcional)', profile_nickname_label:'Apodo *', profile_nickname_ph:'Ej: Vecino amistoso',
-    profile_gender_label:'Género *', gender_m:'🙋‍♂️ Hombre', gender_f:'🙋‍♀️ Mujer', gender_u:'🦄 Otro',
+    profile_gender_label:'Género *', gender_m:'Hombre', gender_f:'Mujer', gender_u:'Otro',
     profile_nationality_label:'Nacionalidad *', profile_btn:'Encontrar mi barrio →',
     loc_title:'Buscando tu barrio...', loc_desc:'Permite el acceso a tu ubicación en el navegador.<br>Entrarás automáticamente a la sala local.',
     msg_placeholder:'Escribe un mensaje...', menu_dm:'Chats 1:1', menu_dm_sub:'Mensajes personales',
@@ -839,7 +858,7 @@ const STRINGS = {
     intro_title:'Village Talk', intro_desc:'Discutez avec vos voisins en temps réel.<br>Rencontrez des personnes proches selon votre position<br>et connectez-vous à votre communauté.', intro_btn:'Commencer →',
     profile_title:'Commencer', profile_desc:'Discutez librement avec vos voisins.<br>Votre position vous place automatiquement dans la bonne salle.',
     profile_avatar_hint:'Appuyez pour télécharger une photo (optionnel)', profile_nickname_label:'Pseudo *', profile_nickname_ph:'Ex: Voisin sympa',
-    profile_gender_label:'Genre *', gender_m:'🙋‍♂️ Homme', gender_f:'🙋‍♀️ Femme', gender_u:'🦄 Autre',
+    profile_gender_label:'Genre *', gender_m:'Homme', gender_f:'Femme', gender_u:'Autre',
     profile_nationality_label:'Nationalité *', profile_btn:'Trouver mon quartier →',
     loc_title:'Recherche de votre quartier...', loc_desc:'Autorisez l\'accès à la localisation dans votre navigateur.<br>Vous rejoindrez automatiquement la salle locale.',
     msg_placeholder:'Tapez un message...', menu_dm:'Chats 1:1', menu_dm_sub:'Messages personnels',
@@ -857,7 +876,7 @@ const STRINGS = {
     intro_title:'Village Talk', intro_desc:'पड़ोसियों से रीयल टाइम में चैट करें।<br>अपनी लोकेशन के आधार पर पास के लोगों से मिलें<br>और अपने समुदाय से जुड़ें।', intro_btn:'शुरू करें →',
     profile_title:'शुरू करें', profile_desc:'अपने स्थानीय पड़ोसियों से स्वतंत्र रूप से चैट करें।<br>आपकी लोकेशन आपको सही कमरे में डालती है।',
     profile_avatar_hint:'फोटो अपलोड करने के लिए टैप करें (वैकल्पिक)', profile_nickname_label:'उपनाम *', profile_nickname_ph:'जैसे: मित्रवत पड़ोसी',
-    profile_gender_label:'लिंग *', gender_m:'🙋‍♂️ पुरुष', gender_f:'🙋‍♀️ महिला', gender_u:'🦄 अन्य',
+    profile_gender_label:'लिंग *', gender_m:'पुरुष', gender_f:'महिला', gender_u:'अन्य',
     profile_nationality_label:'राष्ट्रीयता *', profile_btn:'मेरा मोहल्ला खोजें →',
     loc_title:'आपका मोहल्ला खोज रहे हैं...', loc_desc:'ब्राउज़र में लोकेशन एक्सेस दें।<br>आप अपने आप स्थानीय चैट में जुड़ जाएंगे।',
     msg_placeholder:'संदेश टाइप करें...', menu_dm:'1:1 चैट सूची', menu_dm_sub:'व्यक्तिगत संदेश',
@@ -875,7 +894,7 @@ const STRINGS = {
     intro_title:'Village Talk', intro_desc:'تحدث مع الجيران في الوقت الفعلي.<br>تعرف على أشخاص قريبين منك بناءً على موقعك<br>وتواصل مع مجتمعك.', intro_btn:'ابدأ →',
     profile_title:'ابدأ', profile_desc:'تحدث بحرية مع جيرانك المحليين.<br>موقعك يضعك تلقائياً في الغرفة الصحيحة.',
     profile_avatar_hint:'اضغط لتحميل صورة (اختياري)', profile_nickname_label:'الاسم المستعار *', profile_nickname_ph:'مثال: جار ودود',
-    profile_gender_label:'الجنس *', gender_m:'🙋‍♂️ ذكر', gender_f:'🙋‍♀️ أنثى', gender_u:'🦄 آخر',
+    profile_gender_label:'الجنس *', gender_m:'ذكر', gender_f:'أنثى', gender_u:'آخر',
     profile_nationality_label:'الجنسية *', profile_btn:'ابحث عن حيي →',
     loc_title:'جارٍ البحث عن حيك...', loc_desc:'يرجى السماح بالوصول إلى الموقع في المتصفح.<br>ستنضم تلقائياً إلى غرفة الدردشة المحلية.',
     msg_placeholder:'اكتب رسالة...', menu_dm:'قائمة المحادثات', menu_dm_sub:'رسائل شخصية',
@@ -908,10 +927,20 @@ function buildNationalitySelect(lang) {
   updateNationalityFlag();
 }
 
+function flagEmojiToCode(emoji) {
+  return [...emoji].map(c => String.fromCharCode(c.codePointAt(0) - 127397)).join('').toLowerCase();
+}
+
 function updateNationalityFlag() {
   const sel = document.getElementById('nationalityInput');
   const flag = document.getElementById('nationalityFlag');
-  if (sel && flag) flag.textContent = sel.value || '🌍';
+  if (!sel || !flag) return;
+  const val = sel.value;
+  if (!val) { flag.innerHTML = ''; return; }
+  try {
+    const code = flagEmojiToCode(val);
+    flag.innerHTML = `<img src="https://flagcdn.com/32x24/${code}.png" alt="${val}" style="width:38px;height:28px;object-fit:contain;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.18);">`;
+  } catch(e) { flag.textContent = val; }
 }
 
 function toggleLangMenu() {
