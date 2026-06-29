@@ -413,6 +413,26 @@ body {
 .nat-item:hover { background: var(--c-input); }
 .nat-item.selected { background: var(--blue-l); font-weight: 600; }
 .nat-item img { width: 28px; height: 21px; object-fit: cover; border-radius: 2px; flex-shrink: 0; }
+/* ── About 화면 ── */
+#aboutScreen { align-items: flex-start; overflow-y: auto; padding: 0; }
+.about-header { width: 100%; background: linear-gradient(150deg, #00704A 0%, #004f35 100%); padding: 52px 24px 32px; display: flex; flex-direction: column; align-items: center; position: relative; flex-shrink: 0; }
+.about-back { position: absolute; top: 14px; left: 14px; background: rgba(255,255,255,0.18); border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 20px; line-height: 1; }
+.about-back:active { background: rgba(255,255,255,0.3); }
+.about-header-logo { width: 64px; height: 64px; margin-bottom: 10px; }
+.about-header-title { color: #fff; font-size: 24px; font-weight: 800; letter-spacing: -0.3px; }
+.about-header-sub { color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 4px; text-align: center; line-height: 1.5; }
+.about-body { width: 100%; max-width: 480px; margin: 0 auto; padding: 20px 16px 0; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; }
+.about-card { background: var(--c-panel); border-radius: 16px; padding: 18px 18px 16px; border: 1px solid var(--c-border); box-shadow: 0 2px 8px rgba(0,80,50,.06); }
+.about-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.about-card-emoji { font-size: 26px; line-height: 1; flex-shrink: 0; }
+.about-card-title { font-size: 15px; font-weight: 700; color: #005038; }
+.about-card-desc { font-size: 13.5px; color: var(--c-text); line-height: 1.65; }
+.about-footer { width: 100%; max-width: 480px; margin: 24px auto 0; padding: 20px 16px 40px; border-top: 1px solid var(--c-border); box-sizing: border-box; }
+.about-footer-title { font-size: 13px; font-weight: 700; color: var(--c-muted); margin-bottom: 10px; }
+.about-footer-row { font-size: 12.5px; color: var(--c-muted); margin-bottom: 5px; }
+.about-footer-row a { color: var(--blue); text-decoration: none; }
+.intro-learn-btn { margin-top: 10px; padding: 11px 32px; background: transparent; color: rgba(255,255,255,0.85); border: 1.5px solid rgba(255,255,255,0.5); border-radius: 50px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background .15s; }
+.intro-learn-btn:active { background: rgba(255,255,255,0.15); }
 </style>
 </head>
 <body>
@@ -447,7 +467,29 @@ body {
       </div>
     </div>
     <button class="intro-btn" data-i18n="intro_btn" onclick="startIntro()">시작하기 →</button>
+    <button class="intro-learn-btn" data-i18n="intro_learn" onclick="showScreen('aboutScreen')">서비스 소개 →</button>
   </div>
+</div>
+
+<!-- ⓪-b 서비스 소개 화면 -->
+<div id="aboutScreen" class="screen">
+  <div class="about-header">
+    <button class="about-back" onclick="showScreen('introScreen')">←</button>
+    <svg class="about-header-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="50" fill="rgba(255,255,255,0.15)"/>
+      <path d="M11 65 L50 18 L89 65" stroke="white" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="50" cy="50" r="17" fill="none" stroke="white" stroke-width="4"/>
+      <path d="M50 33 L44 50 L50 44 L56 50 Z" fill="white"/>
+      <path d="M50 67 L56 50 L50 56 L44 50 Z" fill="white" opacity=".35"/>
+      <circle cx="38" cy="79" r="4" fill="white"/>
+      <circle cx="50" cy="79" r="4" fill="white"/>
+      <circle cx="62" cy="79" r="4" fill="white"/>
+    </svg>
+    <div class="about-header-title">Village Chat</div>
+    <div class="about-header-sub" id="aboutHeaderSub"></div>
+  </div>
+  <div class="about-body" id="aboutCards"></div>
+  <footer class="about-footer" id="aboutFooter"></footer>
 </div>
 
 <!-- ① 프로필 설정 화면 -->
@@ -628,7 +670,7 @@ body {
       <input type="file" id="avatarChangeInput" accept="image/*" style="display:none">
       <div class="modal-name" id="myViewName"></div>
       <div class="my-bio-wrap">
-        <textarea class="my-bio-input" id="myBioInput" maxlength="80" placeholder="자기소개를 입력하세요 (최대 80자)" oninput="onBioInput(this)" onblur="saveBio()"></textarea>
+        <textarea class="my-bio-input" id="myBioInput" maxlength="80" data-i18n-ph="bio_placeholder" placeholder="자기소개를 입력하세요 (최대 80자)" oninput="onBioInput(this)" onblur="saveBio()"></textarea>
         <div class="my-bio-counter"><span id="myBioCounter">0</span>/80</div>
       </div>
       <button class="btn-modal" onclick="confirmDeleteProfile()" style="background:#e74c3c" data-i18n="delete_profile">프로필 삭제</button>
@@ -1014,6 +1056,158 @@ const STRINGS = {
   if (STRINGS[l] && x) Object.assign(STRINGS[l], x);
 });
 
+// intro_learn + bio_placeholder
+['en','ko','zh','ja','es','fr','hi','ar'].forEach(l => {
+  const x = {
+    en:{ intro_learn:'About Village Chat →', bio_placeholder:'Write a short intro about yourself (max 80 chars)' },
+    ko:{ intro_learn:'서비스 소개 →',         bio_placeholder:'자기소개를 입력하세요 (최대 80자)' },
+    zh:{ intro_learn:'了解更多 →',             bio_placeholder:'写一段关于自己的简介（最多80字）' },
+    ja:{ intro_learn:'サービス紹介 →',         bio_placeholder:'自己紹介を入力してください（最大80文字）' },
+    es:{ intro_learn:'Conoce más →',           bio_placeholder:'Escribe una breve introducción sobre ti (máx. 80 caracteres)' },
+    fr:{ intro_learn:'En savoir plus →',       bio_placeholder:'Écris une courte présentation de toi (max 80 caractères)' },
+    hi:{ intro_learn:'और जानें →',             bio_placeholder:'अपने बारे में एक छोटा परिचय लिखें (अधिकतम 80 अक्षर)' },
+    ar:{ intro_learn:'تعرف على المزيد →',      bio_placeholder:'اكتب مقدمة قصيرة عن نفسك (بحد أقصى 80 حرفاً)' },
+  }[l];
+  if (STRINGS[l] && x) Object.assign(STRINGS[l], x);
+});
+
+// ── About 컨텐츠 (8개 언어) ──────────────────────────────
+const ABOUT_CONTENT = {
+  ko: {
+    sub: '내 동네, 내 언어로 연결되는 실시간 커뮤니티',
+    cards: [
+      { emoji:'📍', title:'내 동네에서 시작되는 대화', desc:'지금 있는 곳 주변의 사람들과 실시간으로 연결돼요. 동네 소식, 맛집, 생활 꿀팁을 자유롭게 나누며 우리 동네를 더 생생하고 따뜻하게 만들어봐요!' },
+      { emoji:'🔒', title:'익명으로 안전하게, 부담 없이 편하게', desc:'위치는 공유하지만 개인 정보는 철저히 보호돼요. 닉네임과 아바타로 자유롭게 소통하고, 도배·비속어 차단 시스템으로 건강한 채팅 문화를 함께 만들어가요.' },
+      { emoji:'💬', title:'그룹에서 단둘이, 1:1 프라이빗 채팅', desc:'그룹 채팅에서 마음이 통하는 이웃을 발견했다면? 1:1 채팅으로 더 깊은 대화를 나눠봐요. 채팅방을 나가면 상대방이 메시지를 더 이상 볼 수 없어 스토킹 걱정도 없어요.' },
+      { emoji:'⭐', title:'매너가 쌓이는 평판 시스템', desc:'이웃의 👍 추천·👎 비추천으로 에티켓을 평가받아요. 프로필을 초기화하면 모든 기록이 리셋되기 때문에, 좋은 매너를 유지할수록 더 오래 신뢰받을 수 있어요.' },
+      { emoji:'🌍', title:'언어로 연결되는 또 다른 공간', desc:'해외 여행 중이거나 외국어를 배우고 싶다면? 같은 언어를 쓰는 사람들이 모이는 언어별 채팅방을 이용해보세요. 관광객부터 언어 학습자까지 전 세계 이웃과 연결돼요!' },
+    ],
+    contact:'문의',
+    copyright:'© 2025 Village Chat. All rights reserved.',
+    privacy:'개인정보처리방침',
+    terms:'이용약관',
+  },
+  en: {
+    sub: 'A real-time community connected by location & language',
+    cards: [
+      { emoji:'📍', title:'Chat Starts Right Where You Are', desc:'Connect in real time with people near your current location. Share local news, restaurant tips, and everyday info — and help make your neighborhood more lively and welcoming!' },
+      { emoji:'🔒', title:'Anonymous, Safe & Stress-Free', desc:'Your location is shared, but your personal info stays protected. Chat freely with a nickname and avatar — and our anti-spam and profanity filter keeps the community positive and healthy.' },
+      { emoji:'💬', title:'From Group to Private — Just the Two of You', desc:'Found someone you click with in the group chat? Take it to a private 1:1 conversation. Once you leave the chat, the other person can no longer see your messages — no stalking worries.' },
+      { emoji:'⭐', title:'A Reputation System That Rewards Good Manners', desc:'Receive 👍 or 👎 ratings from neighbors based on how you behave. Since resetting your profile wipes all history, being a good neighbor is the best long-term strategy. Earn trust, keep it!' },
+      { emoji:'🌍', title:'Language Rooms — Find Your People Anywhere', desc:'Traveling abroad or learning a new language? Join a language-specific chat room where everyone speaks your language. From tourists to language learners — connect with your global neighborhood!' },
+    ],
+    contact:'Contact',
+    copyright:'© 2025 Village Chat. All rights reserved.',
+    privacy:'Privacy Policy',
+    terms:'Terms of Service',
+  },
+  zh: {
+    sub: '基于位置与语言，实时连接你的社区',
+    cards: [
+      { emoji:'📍', title:'从你所在的地方开始聊天', desc:'与你附近的人实时连接。自由分享本地新闻、美食推荐和生活资讯，让你的社区更加热闹和温暖！' },
+      { emoji:'🔒', title:'匿名安全，轻松无压力', desc:'分享位置但保护个人信息。用昵称和头像自由交流，反刷屏和违禁词过滤系统帮助维护健康的聊天氛围。' },
+      { emoji:'💬', title:'从群聊到私聊，只属于你们两人', desc:'在群聊中遇到聊得来的邻居了吗？切换到1:1私信继续深入交流。离开聊天室后，对方将无法再查看你的消息，彻底告别骚扰。' },
+      { emoji:'⭐', title:'奖励良好礼仪的信誉系统', desc:'根据你的行为获得邻居的👍好评或👎差评。由于重置资料会清除所有记录，保持良好的言行举止才能长期赢得信任！' },
+      { emoji:'🌍', title:'语言频道 — 在任何地方找到同类', desc:'在海外旅行或正在学习外语？加入同语言聊天室，与说同种语言的人交流。无论是游客还是语言学习者，都能连接全球邻居！' },
+    ],
+    contact:'联系我们',
+    copyright:'© 2025 Village Chat. 保留所有权利。',
+    privacy:'隐私政策',
+    terms:'服务条款',
+  },
+  ja: {
+    sub: '位置と言語でつながるリアルタイムコミュニティ',
+    cards: [
+      { emoji:'📍', title:'今いる場所からトークが始まる', desc:'現在地の近くにいる人とリアルタイムでつながりましょう。地域のニュース、グルメ情報、生活の知恵を自由に共有して、もっと活気ある街を一緒につくりましょう！' },
+      { emoji:'🔒', title:'匿名で安全、気軽に話せる', desc:'位置情報は共有しますが、個人情報はしっかり守られます。ニックネームとアバターで自由に交流でき、スパム・不適切発言のブロック機能で健全なコミュニティを守ります。' },
+      { emoji:'💬', title:'グループからプライベートへ、二人だけのトーク', desc:'グループチャットで気が合う近所の人を見つけたら？1:1チャットでもっと深い会話を楽しみましょう。チャットを退出すると相手はメッセージを見られなくなり、ストーキングの心配もありません。' },
+      { emoji:'⭐', title:'マナーが積み上がる評判システム', desc:'近所の人から👍高評価・👎低評価を受けられます。プロフィールをリセットすると全記録が消えるため、マナーを守るほど長く信頼を得られます。良い近所づきあいを目指しましょう！' },
+      { emoji:'🌍', title:'言語でつながる、もう一つの空間', desc:'海外旅行中だったり、外国語を学びたいなら？同じ言語を話す人たちが集まる言語別チャットルームを利用してみましょう。旅行者から語学学習者まで、世界中の近所の人とつながれます！' },
+    ],
+    contact:'お問い合わせ',
+    copyright:'© 2025 Village Chat. All rights reserved.',
+    privacy:'プライバシーポリシー',
+    terms:'利用規約',
+  },
+  es: {
+    sub: 'Una comunidad en tiempo real conectada por ubicación e idioma',
+    cards: [
+      { emoji:'📍', title:'La conversación empieza justo donde estás', desc:'Conéctate en tiempo real con personas cerca de tu ubicación actual. Comparte noticias locales, restaurantes favoritos e información útil del día a día, ¡y haz tu barrio más vivo y acogedor!' },
+      { emoji:'🔒', title:'Anónimo, seguro y sin estrés', desc:'Tu ubicación se comparte, pero tu información personal queda protegida. Chatea libremente con un apodo y avatar, y nuestro sistema antispam y filtro de lenguaje inapropiado mantiene la comunidad sana y positiva.' },
+      { emoji:'💬', title:'Del grupo a lo privado — solo vosotros dos', desc:'¿Encontraste a alguien con quien conectas en el chat grupal? Pásalo a una conversación privada 1:1. Una vez que salgas del chat, la otra persona ya no podrá ver tus mensajes — sin miedo a acosos.' },
+      { emoji:'⭐', title:'Un sistema de reputación que premia los buenos modales', desc:'Recibe valoraciones 👍 o 👎 de tus vecinos según tu comportamiento. Como reiniciar tu perfil borra todo el historial, ser un buen vecino es la mejor estrategia a largo plazo. ¡Gánate la confianza y mantenla!' },
+      { emoji:'🌍', title:'Salas por idioma — encuentra a los tuyos en cualquier lugar', desc:'¿Viajando al extranjero o aprendiendo un nuevo idioma? Únete a una sala de chat por idioma donde todos hablan tu lengua. ¡Desde turistas hasta estudiantes de idiomas, conecta con tu vecindario global!' },
+    ],
+    contact:'Contacto',
+    copyright:'© 2025 Village Chat. Todos los derechos reservados.',
+    privacy:'Política de privacidad',
+    terms:'Términos de servicio',
+  },
+  fr: {
+    sub: 'Une communauté en temps réel connectée par la localisation et la langue',
+    cards: [
+      { emoji:'📍', title:'La conversation commence là où tu es', desc:'Connecte-toi en temps réel avec des personnes près de ta position actuelle. Partage des nouvelles locales, des bons plans restos et des infos pratiques — et rends ton quartier plus vivant et chaleureux !' },
+      { emoji:'🔒', title:'Anonyme, sûr et sans pression', desc:'Ta localisation est partagée, mais tes informations personnelles restent protégées. Chatte librement avec un pseudo et un avatar, et notre système anti-spam et filtre de mots inappropriés maintient une communauté saine.' },
+      { emoji:'💬', title:'Du groupe au privé — juste vous deux', desc:'Tu as trouvé quelqu\'un avec qui tu t\'entends bien dans le groupe ? Passe en discussion privée 1:1 pour aller plus loin. Une fois que tu quittes le chat, l\'autre personne ne peut plus voir tes messages — pas de harcèlement.' },
+      { emoji:'⭐', title:'Un système de réputation qui récompense les bonnes manières', desc:'Reçois des évaluations 👍 ou 👎 de tes voisins selon ton comportement. Comme réinitialiser ton profil efface tout l\'historique, être un bon voisin est la meilleure stratégie sur le long terme. Mérite la confiance, garde-la !' },
+      { emoji:'🌍', title:'Salons par langue — trouve ta tribu partout', desc:'En voyage à l\'étranger ou en train d\'apprendre une nouvelle langue ? Rejoins un salon de chat par langue où tout le monde parle ta langue. Des touristes aux apprenants — connecte-toi avec ton voisinage mondial !' },
+    ],
+    contact:'Contact',
+    copyright:'© 2025 Village Chat. Tous droits réservés.',
+    privacy:'Politique de confidentialité',
+    terms:'Conditions d\'utilisation',
+  },
+  hi: {
+    sub: 'स्थान और भाषा से जुड़ा एक रियल-टाइम समुदाय',
+    cards: [
+      { emoji:'📍', title:'बातचीत वहीं से शुरू होती है जहाँ आप हैं', desc:'अपने वर्तमान स्थान के पास के लोगों से रियल-टाइम में जुड़ें। स्थानीय समाचार, रेस्तरां सुझाव और रोज़मर्रा की जानकारी साझा करें — और अपने पड़ोस को और जीवंत बनाएं!' },
+      { emoji:'🔒', title:'गुमनाम, सुरक्षित और तनाव-मुक्त', desc:'आपकी लोकेशन साझा होती है, लेकिन व्यक्तिगत जानकारी सुरक्षित रहती है। उपनाम और अवतार के साथ स्वतंत्र रूप से चैट करें — हमारा एंटी-स्पैम और अपशब्द फ़िल्टर समुदाय को स्वस्थ रखता है।' },
+      { emoji:'💬', title:'ग्रुप से प्राइवेट — सिर्फ तुम दोनों', desc:'ग्रुप चैट में कोई पसंद आया? 1:1 प्राइवेट चैट में और गहरी बातचीत करें। चैट छोड़ने के बाद दूसरा व्यक्ति आपके संदेश नहीं देख सकता — स्टॉकिंग की चिंता नहीं।' },
+      { emoji:'⭐', title:'अच्छे व्यवहार को पुरस्कृत करती प्रतिष्ठा प्रणाली', desc:'अपने व्यवहार के आधार पर पड़ोसियों से 👍 या 👎 रेटिंग पाएं। प्रोफ़ाइल रीसेट करने पर सारा इतिहास मिट जाता है, इसलिए अच्छा पड़ोसी बने रहना ही सबसे अच्छी रणनीति है!' },
+      { emoji:'🌍', title:'भाषा के कमरे — कहीं भी अपने लोग खोजें', desc:'विदेश यात्रा पर हैं या नई भाषा सीख रहे हैं? अपनी भाषा वाले चैट रूम में शामिल हों। पर्यटकों से लेकर भाषा सीखने वालों तक — अपने वैश्विक पड़ोस से जुड़ें!' },
+    ],
+    contact:'संपर्क',
+    copyright:'© 2025 Village Chat. सर्वाधिकार सुरक्षित।',
+    privacy:'गोपनीयता नीति',
+    terms:'सेवा की शर्तें',
+  },
+  ar: {
+    sub: 'مجتمع فوري متصل بالموقع والغة',
+    cards: [
+      { emoji:'📍', title:'المحادثة تبدأ من مكانك', desc:'تواصل في الوقت الفعلي مع الأشخاص القريبين منك. شارك الأخبار المحلية والمطاعم المميزة ونصائح الحياة اليومية — واجعل حيّك أكثر حيوية ودفئاً!' },
+      { emoji:'🔒', title:'مجهول الهوية، آمن وبلا ضغط', desc:'يُشارَك موقعك لكن معلوماتك الشخصية تبقى محمية. تحدث بحرية باستخدام اسم مستعار وصورة رمزية، ونظام مكافحة الإزعاج وفلتر الألفاظ النابية يحافظ على بيئة إيجابية.' },
+      { emoji:'💬', title:'من المجموعة إلى الخاص — أنتما فقط', desc:'وجدت شخصاً تتفق معه في الدردشة الجماعية؟ انتقلا إلى محادثة خاصة 1:1 لمزيد من العمق. بمجرد مغادرتك للدردشة، لن يتمكن الطرف الآخر من رؤية رسائلك — لا خوف من المضايقة.' },
+      { emoji:'⭐', title:'نظام سمعة يكافئ حسن الأخلاق', desc:'احصل على تقييمات 👍 أو 👎 من الجيران بناءً على سلوكك. بما أن إعادة تعيين ملفك الشخصي يمحو جميع السجلات، فإن أن تكون جاراً طيباً هو أفضل استراتيجية على المدى البعيد!' },
+      { emoji:'🌍', title:'غرف اللغة — اعثر على أهلك في أي مكان', desc:'تسافر في الخارج أو تتعلم لغة جديدة؟ انضم إلى غرفة دردشة بلغتك حيث يتحدث الجميع نفس اللغة. من السياح إلى متعلمي اللغات — تواصل مع جيرانك حول العالم!' },
+    ],
+    contact:'تواصل معنا',
+    copyright:'© 2025 Village Chat. جميع الحقوق محفوظة.',
+    privacy:'سياسة الخصوصية',
+    terms:'شروط الخدمة',
+  },
+};
+
+function renderAbout() {
+  const lang = currentLang;
+  const c = ABOUT_CONTENT[lang] || ABOUT_CONTENT.en;
+  document.getElementById('aboutHeaderSub').textContent = c.sub;
+  const cards = document.getElementById('aboutCards');
+  cards.innerHTML = c.cards.map(card => `
+    <div class="about-card">
+      <div class="about-card-top">
+        <span class="about-card-emoji">${card.emoji}</span>
+        <div class="about-card-title">${card.title}</div>
+      </div>
+      <div class="about-card-desc">${card.desc}</div>
+    </div>`).join('');
+  const isRtl = lang === 'ar';
+  document.getElementById('aboutFooter').innerHTML = `
+    <div class="about-footer-title" style="${isRtl?'direction:rtl;text-align:right':''}">Village Chat</div>
+    <div class="about-footer-row">${c.contact}: <a href="mailto:smchoi0603@gmail.com">smchoi0603@gmail.com</a></div>
+    <div class="about-footer-row"><a href="#">${c.privacy}</a> &nbsp;·&nbsp; <a href="#">${c.terms}</a></div>
+    <div class="about-footer-row" style="margin-top:10px;font-size:11.5px">${c.copyright}</div>`;
+}
+
 let currentLang = localStorage.getItem('dnTalk_lang') || 'ko';
 
 function flagEmojiToCode(emoji) {
@@ -1161,6 +1355,8 @@ function setLang(code) {
         : dd + t('room_suffix');
     }
   }
+  // about 화면 열려있으면 재렌더
+  if (document.getElementById('aboutScreen')?.classList.contains('active')) renderAbout();
 }
 
 function t(key) { return (STRINGS[currentLang] || STRINGS.en)[key] || (STRINGS.en[key] || key); }
@@ -1287,6 +1483,7 @@ const SCREEN_PATHS = {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if (id === 'aboutScreen') renderAbout();
   if (typeof gtag !== 'undefined') {
     gtag('event', 'page_view', {
       page_path: SCREEN_PATHS[id] || '/' + id,
@@ -1434,6 +1631,7 @@ function showMenu() {
   document.getElementById('dongMenuTitle').textContent = dd + t('room_suffix');
   renderLangMenuItems();
   renderMyAvatarBtn();
+  loadBanStatus();
   showScreen('menuScreen');
   if (window._firebaseReady) {
     subscribeInbox(); subscribeDmRooms();
@@ -1645,16 +1843,17 @@ function renderLangMenuItems() {
   const cdnCode = LANG_CDN[currentLang] || 'un';
   const langName = LANG_NATIVE[currentLang] || currentLang.toUpperCase();
   const flagHtml = `<img src="https://flagcdn.com/${cdnCode}.svg" alt="" style="width:20px;height:15px;object-fit:cover;border-radius:2px;vertical-align:middle;margin-right:5px;flex-shrink:0">`;
-  const globeSvg = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`;
+  const guLangSvg = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00704A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="12" height="10" rx="1.5"/><path d="M7 21l4-4h7a1 1 0 001-1V9a1 1 0 00-1-1h-4"/><line x1="6" y1="7" x2="11" y2="7"/><line x1="6" y1="10" x2="9" y2="10"/></svg>`;
+  const dongLangSvg = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00704A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/><path d="M8 20.5q4 1.5 8 0" stroke-dasharray="1.5 1.5"/></svg>`;
   [
-    { type:'gu_lang',   title: flagHtml + langName + ' · ' + gd + t('room_suffix'),  sub: t('menu_lang_gu_sub') },
-    { type:'dong_lang', title: flagHtml + langName + ' · ' + dd + t('room_suffix'),  sub: t('menu_lang_dong_sub') }
-  ].forEach(({ type, title, sub }) => {
+    { type:'gu_lang',   icon: guLangSvg,   title: flagHtml + langName + ' · ' + gd + t('room_suffix'),  sub: t('menu_lang_gu_sub') },
+    { type:'dong_lang', icon: dongLangSvg, title: flagHtml + langName + ' · ' + dd + t('room_suffix'),  sub: t('menu_lang_dong_sub') }
+  ].forEach(({ type, icon, title, sub }) => {
     const btn = document.createElement('button');
     btn.className = 'menu-item menu-item-lang';
     btn.onclick = () => enterGroupChat(type);
     btn.innerHTML = `
-      <span class="menu-icon" style="background:#eef4ff">${globeSvg}</span>
+      <span class="menu-icon" style="background:#dcf3e8">${icon}</span>
       <div class="menu-item-body">
         <div class="menu-item-title" style="display:flex;align-items:center">${title}</div>
         <div class="menu-item-sub">${sub}</div>
@@ -2268,6 +2467,95 @@ function stopAdBanner() {
   document.getElementById('adBanner').style.display = 'none';
 }
 
+// ── 도배 방지 ────────────────────────────────────────────
+const SPAM_WINDOW_MS       = 5000;
+const SPAM_COUNT           = 5;
+const ESCALATION_WINDOW_MS = 10 * 60 * 1000;
+const BAN_DURATIONS_SEC    = [60, 600, 3600, 21600, 86400, 604800];
+
+const SPAM_WARN_MSG = {
+  ko:'도배가 감지되었습니다. {t} 동안 채팅이 제한됩니다.',
+  en:'Spam detected. You are banned from chatting for {t}.',
+  zh:'检测到刷屏行为，您将被禁止发言 {t}。',
+  ja:'スパムが検出されました。{t} 間チャットが制限されます。',
+  es:'Spam detectado. No podrás chatear durante {t}.',
+  fr:'Spam détecté. Vous êtes banni du chat pendant {t}.',
+  hi:'स्पैम पाया गया। आप {t} के लिए चैट से प्रतिबंधित हैं।',
+  ar:'تم رصد الرسائل المتكررة. أنت محظور من الدردشة لمدة {t}.',
+};
+const SPAM_BANNED_MSG = {
+  ko:'채팅 제한 중입니다. 남은 시간: {t}',
+  en:'You are currently banned. Time remaining: {t}',
+  zh:'您目前被禁言。剩余时间：{t}',
+  ja:'現在チャットが制限されています。残り時間：{t}',
+  es:'Estás actualmente baneado. Tiempo restante: {t}',
+  fr:'Vous êtes actuellement banni. Temps restant : {t}',
+  hi:'आप वर्तमान में प्रतिबंधित हैं। शेष समय: {t}',
+  ar:'أنت محظور حالياً. الوقت المتبقي: {t}',
+};
+
+let recentGroupMsgTs = [];
+let spamBanUntil = null;
+
+function formatBanDuration(sec) {
+  if (sec < 60)    return currentLang === 'ko' ? `${sec}초`      : `${sec}s`;
+  if (sec < 3600)  return currentLang === 'ko' ? `${Math.round(sec/60)}분`   : `${Math.round(sec/60)}min`;
+  if (sec < 86400) return currentLang === 'ko' ? `${Math.round(sec/3600)}시간` : `${Math.round(sec/3600)}h`;
+  return currentLang === 'ko' ? `${Math.round(sec/86400)}일` : `${Math.round(sec/86400)}d`;
+}
+
+async function loadBanStatus() {
+  if (!window._firebaseReady || !profile) return;
+  try {
+    const snap = await window._getDoc(window._doc(window._db, 'bans', profile.nickname));
+    if (snap.exists()) {
+      const ban = snap.data();
+      const until = ban.until?.toDate ? ban.until.toDate() : new Date(ban.until);
+      if (until > new Date()) spamBanUntil = until;
+    }
+  } catch(e) {}
+}
+
+async function checkSpam() {
+  if (!currentRoom || currentRoom.isDM) return true;
+  const now = Date.now();
+  if (spamBanUntil && spamBanUntil > new Date()) {
+    const remainSec = Math.ceil((spamBanUntil - new Date()) / 1000);
+    alert((SPAM_BANNED_MSG[currentLang] || SPAM_BANNED_MSG.en).replace('{t}', formatBanDuration(remainSec)));
+    return false;
+  }
+  recentGroupMsgTs = recentGroupMsgTs.filter(t => now - t < SPAM_WINDOW_MS);
+  recentGroupMsgTs.push(now);
+  if (recentGroupMsgTs.length >= SPAM_COUNT) {
+    recentGroupMsgTs = [];
+    await triggerSpamBan();
+    return false;
+  }
+  return true;
+}
+
+async function triggerSpamBan() {
+  if (!window._firebaseReady) return;
+  const now = new Date();
+  const banRef = window._doc(window._db, 'bans', profile.nickname);
+  let level = 0;
+  try {
+    const snap = await window._getDoc(banRef);
+    if (snap.exists()) {
+      const prev = snap.data();
+      const lastV = prev.lastViolation?.toDate ? prev.lastViolation.toDate() : new Date(prev.lastViolation || 0);
+      if (now - lastV < ESCALATION_WINDOW_MS) {
+        level = Math.min((prev.level ?? -1) + 1, BAN_DURATIONS_SEC.length - 1);
+      }
+    }
+  } catch(e) {}
+  const durSec = BAN_DURATIONS_SEC[level];
+  const until = new Date(now.getTime() + durSec * 1000);
+  spamBanUntil = until;
+  await window._setDoc(banRef, { level, until, lastViolation: now }).catch(() => {});
+  alert((SPAM_WARN_MSG[currentLang] || SPAM_WARN_MSG.en).replace('{t}', formatBanDuration(durSec)));
+}
+
 // ── 비속어 필터 ──────────────────────────────────────────
 const PROFANITY = {
   ko: ['씨발','시발','씨바','시바','ㅅㅂ','ㅆㅂ','개새끼','개새','새끼','놈','년','개년','미친놈','미친년','병신','ㅂㅅ','지랄','개지랄','꺼져','닥쳐','존나','ㅈㄴ','좆','보지','자지','씹','개씹','창녀','창놈','찐따','정신병자','미친','개미친','빡대가리','멍청이','바보','등신','개등신','돌대가리','머저리','쓰레기','개쓰레기'],
@@ -2299,16 +2587,16 @@ function containsProfanity(text) {
 }
 
 // ── 메시지 전송 ──────────────────────────────────────────
-function sendMsg() {
+async function sendMsg() {
   if (!currentRoom || !window._firebaseReady) return;
   const input = document.getElementById('msgInput');
   const text = input.value.trim();
   if (!text) return;
   if (containsProfanity(text)) {
-    const msg = PROFANITY_MSG[currentLang] || PROFANITY_MSG.en;
-    alert(msg);
+    alert(PROFANITY_MSG[currentLang] || PROFANITY_MSG.en);
     return;
   }
+  if (!await checkSpam()) return;
   const colRef = window._collection(window._db, 'rooms', currentRoom.id, 'messages');
   window._addDoc(colRef, {
     sender: profile.nickname, gender: profile.gender,
