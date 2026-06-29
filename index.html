@@ -509,7 +509,7 @@ body {
   <div class="legal-header">
     <button class="legal-back" onclick="showScreen('aboutScreen')">←</button>
     <div class="legal-header-title" id="privacyTitle">개인정보처리방침</div>
-    <div class="legal-header-date">시행일: 2025년 1월 1일 &nbsp;|&nbsp; 최종 수정: 2026년 1월 1일</div>
+    <div class="legal-header-date" id="privacyDate"></div>
   </div>
   <div class="legal-body" id="privacyBody"></div>
 </div>
@@ -519,7 +519,7 @@ body {
   <div class="legal-header">
     <button class="legal-back" onclick="showScreen('aboutScreen')">←</button>
     <div class="legal-header-title" id="termsTitle">이용약관</div>
-    <div class="legal-header-date">시행일: 2025년 1월 1일 &nbsp;|&nbsp; 최종 수정: 2026년 1월 1일</div>
+    <div class="legal-header-date" id="termsDate"></div>
   </div>
   <div class="legal-body" id="termsBody"></div>
 </div>
@@ -1250,9 +1250,38 @@ function renderAbout() {
     <div class="about-footer-row" style="margin-top:10px;font-size:11.5px">${c.copyright}</div>`;
 }
 
+function legalDateStr(lang, effectiveDate, updatedDate) {
+  const fmt = {
+    ko: `시행일: ${effectiveDate.ko} &nbsp;|&nbsp; 최종 수정: ${updatedDate.ko}`,
+    en: `Effective: ${effectiveDate.en} &nbsp;|&nbsp; Last updated: ${updatedDate.en}`,
+    zh: `生效日期：${effectiveDate.zh} &nbsp;|&nbsp; 最后更新：${updatedDate.zh}`,
+    ja: `施行日：${effectiveDate.ja} &nbsp;|&nbsp; 最終更新：${updatedDate.ja}`,
+    es: `Vigente desde: ${effectiveDate.es} &nbsp;|&nbsp; Última actualización: ${updatedDate.es}`,
+    fr: `En vigueur le : ${effectiveDate.fr} &nbsp;|&nbsp; Dernière mise à jour : ${updatedDate.fr}`,
+    hi: `प्रभावी: ${effectiveDate.hi} &nbsp;|&nbsp; अंतिम अद्यतन: ${updatedDate.hi}`,
+    ar: `ساري منذ: ${effectiveDate.ar} &nbsp;|&nbsp; آخر تحديث: ${updatedDate.ar}`,
+  };
+  return fmt[lang] || fmt.en;
+}
+
+const LEGAL_DATES = {
+  effective: {
+    ko:'2026년 1월 1일', en:'January 1, 2026', zh:'2026年1月1日',
+    ja:'2026年1月1日', es:'1 de enero de 2026', fr:'1ᵉʳ janvier 2026',
+    hi:'1 जनवरी 2026', ar:'1 يناير 2026',
+  },
+  updated: {
+    ko:'2026년 6월 29일', en:'June 29, 2026', zh:'2026年6月29日',
+    ja:'2026年6月29日', es:'29 de junio de 2026', fr:'29 juin 2026',
+    hi:'29 जून 2026', ar:'29 يونيو 2026',
+  },
+};
+
 function renderPrivacy() {
-  const isEn = currentLang === 'en';
+  const lang = currentLang;
+  const isEn = lang === 'en';
   document.getElementById('privacyTitle').textContent = isEn ? 'Privacy Policy' : '개인정보처리방침';
+  document.getElementById('privacyDate').innerHTML = legalDateStr(lang, LEGAL_DATES.effective, LEGAL_DATES.updated);
   document.getElementById('privacyBody').innerHTML = `
     <div class="legal-section">
       <div class="legal-section-title">${isEn ? '1. Overview' : '1. 개요'}</div>
@@ -1265,11 +1294,20 @@ function renderPrivacy() {
       <div class="legal-section-title">${isEn ? '2. Information We Collect' : '2. 수집하는 정보'}</div>
       <p><strong>${isEn ? 'Information you provide:' : '직접 제공하는 정보:'}</strong></p>
       <ul>
-        <li>${isEn ? 'Nickname, gender, nationality flag, profile photo (avatar)' : '닉네임, 성별, 국적 국기, 프로필 사진(아바타)'}</li>
+        <li>${isEn
+          ? 'Nickname and profile photo (avatar)'
+          : '닉네임, 프로필 사진(아바타)'}</li>
+        <li>${isEn
+          ? 'Gender and nationality — these are <em>user-selected display attributes</em>, not verified personal identifiers. You may choose any value freely.'
+          : '성별 및 국적 — 이는 이용자가 <em>자유롭게 선택하는 표시용 속성</em>으로, 실제 신원 정보가 아닙니다. 어떤 값이든 자유롭게 선택할 수 있습니다.'}</li>
         <li>${isEn ? 'Self-introduction (bio, up to 80 characters)' : '자기소개(바이오, 최대 80자)'}</li>
         <li>${isEn ? 'Chat messages (group chat and 1:1 private messages)' : '채팅 메시지(그룹채팅 및 1:1 개인 메시지)'}</li>
         <li>${isEn ? 'Reputation votes (Boom Up / Down) given to other users' : '다른 사용자에 대한 평판 투표(붐업/다운)'}</li>
       </ul>
+      <p>${isEn
+        ? 'You may delete all of the above at any time using the <strong>"Delete Profile"</strong> button in the app.'
+        : '위 정보는 앱 내 <strong>"프로필 삭제"</strong> 버튼을 통해 언제든지 삭제할 수 있습니다.'
+      }</p>
       <p><strong>${isEn ? 'Automatically collected information:' : '자동 수집 정보:'}</strong></p>
       <ul>
         <li>${isEn ? 'Approximate location (latitude/longitude, converted to district and neighborhood name only — exact coordinates are not stored)' : '대략적 위치(위도/경도 → 구·동 단위 지역명으로 변환, 정밀 좌표는 저장하지 않음)'}</li>
@@ -1347,8 +1385,10 @@ function renderPrivacy() {
 }
 
 function renderTerms() {
-  const isEn = currentLang === 'en';
+  const lang = currentLang;
+  const isEn = lang === 'en';
   document.getElementById('termsTitle').textContent = isEn ? 'Terms of Service' : '이용약관';
+  document.getElementById('termsDate').innerHTML = legalDateStr(lang, LEGAL_DATES.effective, LEGAL_DATES.updated);
   document.getElementById('termsBody').innerHTML = `
     <div class="legal-section">
       <div class="legal-section-title">${isEn ? '1. Acceptance of Terms' : '1. 약관 동의'}</div>
