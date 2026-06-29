@@ -326,7 +326,8 @@ body {
 }
 .modal-overlay.open { display: flex; }
 .modal-sheet {
-  background: var(--c-panel); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(160deg, #f0faf5 0%, #d6efe5 100%);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: 1.5rem 1.5rem 2rem; width: 100%; max-width: 480px;
   display: flex; flex-direction: column; align-items: center; gap: 12px;
   max-height: 90dvh; overflow-y: auto;
@@ -1142,22 +1143,22 @@ function setLang(code) {
   });
   // 메뉴 방 제목 갱신
   if (currentLocation) {
-    const { gu, dong } = currentLocation;
+    const { guDisplay: gd, dongDisplay: dd } = currentLocation;
     const guEl = document.getElementById('guMenuTitle');
     const dongEl = document.getElementById('dongMenuTitle');
-    if (guEl) guEl.textContent = gu + t('room_suffix');
-    if (dongEl) dongEl.textContent = dong + t('room_suffix');
+    if (guEl) guEl.textContent = gd + t('room_suffix');
+    if (dongEl) dongEl.textContent = dd + t('room_suffix');
   }
   // 언어별 메뉴 아이템 갱신
   renderLangMenuItems();
   // 그룹 채팅방 상단 제목 갱신
   if (currentRoom && !currentRoom.isDM && currentLocation) {
-    const { gu, dong } = currentLocation;
+    const { guDisplay: gd, dongDisplay: dd } = currentLocation;
     const titleEl = document.getElementById('roomTitle');
     if (titleEl) {
       titleEl.textContent = currentRoom.id.startsWith('gu_')
-        ? gu + t('room_suffix')
-        : dong + t('room_suffix');
+        ? gd + t('room_suffix')
+        : dd + t('room_suffix');
     }
   }
 }
@@ -1363,27 +1364,45 @@ function requestLocation() {
   });
 }
 
+async function nominatimFetch(lat, lng, lang, zoom) {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=${lang}&zoom=${zoom}&addressdetails=1`
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  const addr = data.address || {};
+  const gu   = addr.city_district || addr.borough || addr.county || addr.city || addr.municipality || addr.state_district || '';
+  const dong = addr.neighbourhood  || addr.quarter || addr.suburb || addr.village || addr.town || addr.hamlet || '';
+  return (gu && dong) ? { gu, dong } : null;
+}
+
 async function onLocSuccess(pos) {
   const { latitude: lat, longitude: lng } = pos.coords;
   document.getElementById('locTitle').textContent = t('loc_title');
-  // Nominatim → 실패 시 BigDataHub 스타일 fallback 없이 에러 표시
+
   for (const zoom of [16, 14, 12]) {
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko&zoom=${zoom}&addressdetails=1`
-      );
-      if (!res.ok) continue;
-      const data = await res.json();
-      const addr = data.address || {};
-      // 시/군/구 (1단계): city_district(구) > county(군/시) > city > municipality
-      const gu = addr.city_district || addr.borough || addr.county || addr.city || addr.municipality || addr.state_district || '알 수 없는 구';
-      // 읍/면/동 (2단계): neighbourhood > quarter > suburb > village > town > hamlet
-      const dong = addr.neighbourhood || addr.quarter || addr.suburb || addr.village || addr.town || addr.hamlet || '알 수 없는 동';
-      if (gu && dong) {
-        currentLocation = { gu, dong };
-        showMenu();
-        return;
+      // 방 ID는 항상 한국어 기준 (여러 언어 사용자가 같은 방에 모이려면 일관된 키 필요)
+      const ko = await nominatimFetch(lat, lng, 'ko', zoom);
+      if (!ko) continue;
+
+      // 표시 이름: 선택 언어로 별도 fetch (한국어면 그대로)
+      let display = ko;
+      if (currentLang !== 'ko') {
+        try {
+          const loc = await nominatimFetch(lat, lng, currentLang, zoom);
+          if (loc) display = loc;
+        } catch(e) {}
       }
+
+      currentLocation = {
+        gu:          ko.gu,       // 방 ID용 (항상 한국어)
+        dong:        ko.dong,
+        guDisplay:   display.gu,  // 화면 표시용 (선택 언어)
+        dongDisplay: display.dong,
+      };
+      showMenu();
+      return;
     } catch(e) { /* 다음 zoom 시도 */ }
   }
   showLocError('주소를 가져오는 데 실패했어요.\n잠시 후 다시 시도해 주세요.');
@@ -1409,10 +1428,10 @@ function showLocError(msg) {
 
 // ── 메인 메뉴 ────────────────────────────────────────────
 function showMenu() {
-  const { gu, dong } = currentLocation;
-  document.getElementById('menuLocation').textContent = gu + ' · ' + dong;
-  document.getElementById('guMenuTitle').textContent = gu + t('room_suffix');
-  document.getElementById('dongMenuTitle').textContent = dong + t('room_suffix');
+  const { guDisplay: gd, dongDisplay: dd } = currentLocation;
+  document.getElementById('menuLocation').textContent = gd + ' · ' + dd;
+  document.getElementById('guMenuTitle').textContent = gd + t('room_suffix');
+  document.getElementById('dongMenuTitle').textContent = dd + t('room_suffix');
   renderLangMenuItems();
   renderMyAvatarBtn();
   showScreen('menuScreen');
@@ -1619,7 +1638,7 @@ function getLangFlagHtml() {
 function renderLangMenuItems() {
   document.querySelectorAll('.menu-item-lang').forEach(el => el.remove());
   if (!currentLocation) return;
-  const { gu, dong } = currentLocation;
+  const { guDisplay: gd, dongDisplay: dd } = currentLocation;
   const list = document.querySelector('.menu-list');
   const dmBtn = list ? list.querySelector('[onclick="showDmList()"]') : null;
   if (!list || !dmBtn) return;
@@ -1628,8 +1647,8 @@ function renderLangMenuItems() {
   const flagHtml = `<img src="https://flagcdn.com/${cdnCode}.svg" alt="" style="width:20px;height:15px;object-fit:cover;border-radius:2px;vertical-align:middle;margin-right:5px;flex-shrink:0">`;
   const globeSvg = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`;
   [
-    { type:'gu_lang',   title: flagHtml + langName + ' · ' + gu + t('room_suffix'),   sub: t('menu_lang_gu_sub') },
-    { type:'dong_lang', title: flagHtml + langName + ' · ' + dong + t('room_suffix'), sub: t('menu_lang_dong_sub') }
+    { type:'gu_lang',   title: flagHtml + langName + ' · ' + gd + t('room_suffix'),  sub: t('menu_lang_gu_sub') },
+    { type:'dong_lang', title: flagHtml + langName + ' · ' + dd + t('room_suffix'),  sub: t('menu_lang_dong_sub') }
   ].forEach(({ type, title, sub }) => {
     const btn = document.createElement('button');
     btn.className = 'menu-item menu-item-lang';
@@ -1646,18 +1665,18 @@ function renderLangMenuItems() {
 }
 
 function enterGroupChat(type) {
-  const { gu, dong } = currentLocation;
+  const { gu, dong, guDisplay: gd, dongDisplay: dd } = currentLocation;
   const cdnCode = LANG_CDN[currentLang] || 'un';
   const langName = LANG_NATIVE[currentLang] || currentLang.toUpperCase();
   const flagHtml = `<img src="https://flagcdn.com/${cdnCode}.svg" alt="" style="width:20px;height:15px;object-fit:cover;border-radius:2px;vertical-align:middle;margin-right:4px">`;
   if (type === 'gu')
-    enterChat('gu_' + gu, gu + t('room_suffix'), '', gu, 'menuScreen');
+    enterChat('gu_' + gu, gd + t('room_suffix'), '', gd, 'menuScreen');
   else if (type === 'dong')
-    enterChat('dong_' + gu + '_' + dong, dong + t('room_suffix'), gu, gu + ' · ' + dong, 'menuScreen');
+    enterChat('dong_' + gu + '_' + dong, dd + t('room_suffix'), gd, gd + ' · ' + dd, 'menuScreen');
   else if (type === 'gu_lang')
-    enterChat('gu_' + gu + '_lang_' + currentLang, flagHtml + langName + ' · ' + gu + t('room_suffix'), '', gu, 'menuScreen');
+    enterChat('gu_' + gu + '_lang_' + currentLang, flagHtml + langName + ' · ' + gd + t('room_suffix'), '', gd, 'menuScreen');
   else if (type === 'dong_lang')
-    enterChat('dong_' + gu + '_' + dong + '_lang_' + currentLang, flagHtml + langName + ' · ' + dong + t('room_suffix'), gu, gu + ' · ' + dong, 'menuScreen');
+    enterChat('dong_' + gu + '_' + dong + '_lang_' + currentLang, flagHtml + langName + ' · ' + dd + t('room_suffix'), gd, gd + ' · ' + dd, 'menuScreen');
 }
 
 // ── 1:1 채팅 입장 ────────────────────────────────────────
