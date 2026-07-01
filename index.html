@@ -34,6 +34,7 @@
   import { initializeFirestore, collection, addDoc, setDoc, deleteDoc, getDocs, getDoc, doc, query, orderBy, onSnapshot, limit, where, enableNetwork, disableNetwork }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyD2hHTmoeCDfrEPTMBQ37TtgkrIfK0t6P8",
@@ -46,6 +47,8 @@
 
   const app = initializeApp(firebaseConfig);
   const db  = initializeFirestore(app, { experimentalForceLongPolling: true });
+  const auth = getAuth(app);
+
   window._db = db;
   window._collection = collection;
   window._addDoc = addDoc;
@@ -61,8 +64,18 @@
   window._where = where;
   window._enableNetwork = enableNetwork;
   window._disableNetwork = disableNetwork;
-  window._firebaseReady = true;
-  document.dispatchEvent(new Event("firebaseReady"));
+
+  // 익명 로그인 — 기기마다 고유 UID 발급
+  signInAnonymously(auth).then(cred => {
+    window._myUid = cred.user.uid;
+    window._firebaseReady = true;
+    document.dispatchEvent(new Event("firebaseReady"));
+  }).catch(() => {
+    // Auth 실패해도 앱은 동작하되 DM 보안 기능만 제한
+    window._myUid = null;
+    window._firebaseReady = true;
+    document.dispatchEvent(new Event("firebaseReady"));
+  });
 </script>
 
 <style>
@@ -788,6 +801,13 @@ if (profile && !profile.profileId) {
     window._setDoc(window._doc(window._db, 'users', profile.nickname), { profileId: profile.profileId, lastSeen: new Date() }).catch(() => {});
   }, { once: true });
 }
+// UID를 users/{nick}에 기록 — DM 보안에 사용
+function registerUid() {
+  if (!window._firebaseReady || !window._myUid || !profile?.nickname) return;
+  window._setDoc(window._doc(window._db, 'users', profile.nickname), { uid: window._myUid }, { merge: true }).catch(() => {});
+}
+document.addEventListener('firebaseReady', () => { registerUid(); }, { once: true });
+
 let currentLocation = { gu: '', dong: '' };
 let currentRoom = null;
 let chatBackTarget = 'menuScreen';
@@ -1919,11 +1939,42 @@ async function onLocSuccess(pos) {
         } catch(e) {}
       }
 
+      // 시 레벨: 구가 있는데 si가 비어있으면 zoom=10으로 별도 조회
+      let siKo = ko.si;
+      let siDisplay = display.si || ko.si;
+      if (ko.gu && !siKo) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko&zoom=10&addressdetails=1`
+          );
+          if (res.ok) {
+            const d = await res.json();
+            const a = d.address || {};
+            siKo = a.city || a.state || a.county || a.municipality || '';
+          }
+        } catch(e) {}
+        if (siKo && currentLang !== 'ko') {
+          try {
+            const chain = LANG_ACCEPT_CHAIN[currentLang] || `${currentLang},en;q=0.8,ko;q=0.5`;
+            const res2 = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=${encodeURIComponent(chain)}&zoom=10&addressdetails=1`
+            );
+            if (res2.ok) {
+              const d2 = await res2.json();
+              const a2 = d2.address || {};
+              siDisplay = a2.city || a2.state || a2.county || a2.municipality || siKo;
+            }
+          } catch(e) {}
+        } else {
+          siDisplay = siKo;
+        }
+      }
+
       currentLocation = {
-        si:          ko.si,
+        si:          siKo,
         gu:          ko.gu,
         dong:        ko.dong,
-        siDisplay:   display.si || ko.si,
+        siDisplay:   siDisplay || siKo,
         guDisplay:   display.gu,
         dongDisplay: display.dong,
       };
@@ -2268,21 +2319,33 @@ let dmMsgSent = false; // 현재 DM 세션에서 메시지 보냈는지 추적
 async function enterDM(partnerNick, partnerAvatarData, partnerGender, partnerNationality = '') {
   dmMsgSent = false;
   closePartnerModal();
-  // 닉네임 기반 고정 방 ID — 같은 두 사람은 항상 같은 방 사용
   const dmId = 'dm_' + [profile.nickname, partnerNick].sort().join('__');
   const partnerLeft = getLeftDms().includes(dmId);
   saveDmToList({ id: dmId, partnerNick, partnerAvatar: partnerAvatarData, partnerGender, partnerNationality });
   subscribeDmRooms();
-  // 상대가 나가지 않은 경우에만 초대 알림 전송
-  if (!partnerLeft && window._firebaseReady) {
-    const inboxRef = window._doc(window._db, 'users', partnerNick, 'inbox', dmId);
-    window._setDoc(inboxRef, {
-      dmId, partnerNick: profile.nickname,
-      partnerAvatar: profile.avatar || '',
-      partnerGender: profile.gender,
-      partnerNationality: profile.nationality || '',
-      ts: new Date()
-    }).catch(() => {});
+
+  if (window._firebaseReady) {
+    // 상대방 UID 조회 후 dmRooms 참여자 문서 생성 (DM 접근 보안)
+    if (window._myUid) {
+      try {
+        const partnerSnap = await window._getDoc(window._doc(window._db, 'users', partnerNick));
+        const partnerUid = partnerSnap.exists() ? partnerSnap.data().uid : null;
+        const participants = [window._myUid];
+        if (partnerUid) participants.push(partnerUid);
+        await window._setDoc(window._doc(window._db, 'dmRooms', dmId), { participants }, { merge: true });
+      } catch(e) {}
+    }
+    // 상대가 나가지 않은 경우에만 초대 알림 전송
+    if (!partnerLeft) {
+      const inboxRef = window._doc(window._db, 'users', partnerNick, 'inbox', dmId);
+      window._setDoc(inboxRef, {
+        dmId, partnerNick: profile.nickname,
+        partnerAvatar: profile.avatar || '',
+        partnerGender: profile.gender,
+        partnerNationality: profile.nationality || '',
+        ts: new Date()
+      }).catch(() => {});
+    }
   }
   enterChat(dmId, partnerNick, t('dm_chat'), '', 'dmListScreen', true);
 }
@@ -2311,6 +2374,7 @@ function subscribeInbox() {
           if (!existing || wasLocked) {
             saveDmToList({ id: d.dmId, partnerNick: d.partnerNick, partnerAvatar: d.partnerAvatar, partnerGender: d.partnerGender, partnerNationality: d.partnerNationality || '' });
             if (wasLocked) clearLeftMark(d.dmId);
+            registerDmParticipant(d.dmId);
             changed = true;
           }
         }
@@ -2333,9 +2397,23 @@ function subscribeInbox() {
       const wasLocked = getLeftDms().includes(d.dmId);
       saveDmToList({ id: d.dmId, partnerNick: d.partnerNick, partnerAvatar: d.partnerAvatar, partnerGender: d.partnerGender, partnerNationality: d.partnerNationality || '' });
       if (wasLocked) clearLeftMark(d.dmId);
+      registerDmParticipant(d.dmId);
       subscribeDmRooms();
     });
   });
+}
+
+// DM 수신 측 UID 등록 — 상대가 생성한 dmRooms 문서에 내 UID 추가
+function registerDmParticipant(dmId) {
+  if (!window._myUid || !window._firebaseReady) return;
+  const ref = window._doc(window._db, 'dmRooms', dmId);
+  window._getDoc(ref).then(snap => {
+    const participants = snap.exists() ? (snap.data().participants || []) : [];
+    if (!participants.includes(window._myUid)) {
+      participants.push(window._myUid);
+      window._setDoc(ref, { participants }, { merge: true }).catch(() => {});
+    }
+  }).catch(() => {});
 }
 
 // ── DM 방 메시지 구독 (알림 + 마지막 메시지 미리보기) ────
