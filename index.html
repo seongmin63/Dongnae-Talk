@@ -3063,6 +3063,10 @@ function containsProfanity(text) {
 // ── 메시지 전송 ──────────────────────────────────────────
 async function sendMsg() {
   if (!currentRoom || !window._firebaseReady) return;
+  if (!window._myUid) {
+    alert(currentLang === 'ko' ? '로그인 중입니다. 잠시 후 다시 시도해주세요.' : 'Signing in… please try again in a moment.');
+    return;
+  }
   const input = document.getElementById('msgInput');
   const text = input.value.trim();
   if (!text) return;
@@ -3075,7 +3079,7 @@ async function sendMsg() {
   window._addDoc(colRef, {
     sender: profile.nickname, gender: profile.gender,
     avatar: profile.avatar || '', nationality: profile.nationality || '', text, ts: new Date(),
-  }).catch(err => alert('전송 오류: ' + err.message));
+  }).catch(() => {});
   if (currentRoom?.isDM) dmMsgSent = true;
   input.value = ''; input.style.height = 'auto';
 }
