@@ -718,11 +718,9 @@ body {
       <div class="modal-name" id="myViewName"></div>
       <div id="myBoomRow" style="display:flex;gap:10px;opacity:.8"></div>
       <!-- 바이오 보기 모드 -->
-      <div class="my-bio-wrap" id="bioViewWrap" style="display:flex;align-items:center;gap:8px;justify-content:center">
-        <div id="myBioView" style="font-size:13px;color:var(--c-muted);text-align:center;line-height:1.5;word-break:break-all;flex:1"></div>
-        <button onclick="startBioEdit()" style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:4px;color:var(--c-muted)" title="수정">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
+      <div class="my-bio-wrap" id="bioViewWrap" onclick="startBioEdit()" style="cursor:pointer;width:100%;box-sizing:border-box;border:1.5px solid var(--c-border);border-radius:10px;padding:10px 12px;background:var(--c-input);display:flex;align-items:center;gap:8px;min-height:44px">
+        <div id="myBioView" style="font-size:13px;line-height:1.5;word-break:break-all;flex:1;text-align:left"></div>
+        <svg style="flex-shrink:0;color:var(--c-muted)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </div>
       <!-- 바이오 수정 모드 -->
       <div class="my-bio-wrap" id="bioEditWrap" style="display:none">
@@ -1891,7 +1889,7 @@ async function nominatimFetch(lat, lng, langChain, zoom) {
   const isGun = !!addr.county && !addr.city_district;
   // 시 단위: 구가 있는 도시는 city 또는 state가 시
   const si   = !isGun && addr.city_district
-    ? (addr.city || addr.state_district || addr.municipality || '')
+    ? (addr.city || addr.state || addr.state_district || addr.municipality || '')
     : '';
   const gu   = addr.city_district || addr.borough || addr.county || addr.city || addr.municipality || addr.state_district || '';
   // 군 지역은 읍(town)/면(suburb·village)만 사용 — 리(neighbourhood·hamlet) 제외
@@ -1998,6 +1996,17 @@ function renderMyAvatarBtn() {
 }
 
 // ── 내 프로필 모달 ────────────────────────────────────────
+function setBioView(bio) {
+  const el = document.getElementById('myBioView');
+  if (bio) {
+    el.textContent = bio;
+    el.style.color = 'var(--c-text)';
+  } else {
+    el.textContent = t('bio_placeholder');
+    el.style.color = 'var(--c-muted)';
+  }
+}
+
 function onBioInput(el) {
   document.getElementById('myBioCounter').textContent = el.value.length;
 }
@@ -2025,7 +2034,7 @@ function saveBio() {
   if (window._firebaseReady) {
     window._setDoc(window._doc(window._db, 'users', profile.nickname), { bio }, { merge: true }).catch(() => {});
   }
-  document.getElementById('myBioView').textContent = bio || '';
+  setBioView(bio);
   cancelBioEdit();
 }
 
@@ -2042,7 +2051,7 @@ function openMyProfile() {
   const myFlag = natFlagImg(profile?.nationality, 20, 15);
   document.getElementById('myViewName').innerHTML = (myFlag ? myFlag + ' ' : '') + esc(profile?.nickname || '') + (genderIcon ? ' ' + genderIcon : '');
   const bio = profile?.bio || '';
-  document.getElementById('myBioView').textContent = bio;
+  setBioView(bio);
   document.getElementById('bioViewWrap').style.display = 'flex';
   document.getElementById('bioEditWrap').style.display = 'none';
   // 붐 수치 표시 (읽기 전용)
